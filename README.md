@@ -63,7 +63,7 @@ INPUT: Job + Candidate
 
 ---
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 logis_ml_engine/
@@ -297,7 +297,7 @@ pytest logis_ai_candidate_engine/tests/test_phase4_hybrid_scoring.py -v
 
 ---
 
-## 📈 Performance
+##  Performance
 
 ### Typical Latency
 - Hard Rejection: ~5-10ms
@@ -334,7 +334,7 @@ pytest logis_ai_candidate_engine/tests/test_phase4_hybrid_scoring.py -v
 
 ---
 
-## 📚 Documentation
+## Documentation
 
 - **[PHASE4_COMPLETE.md](PHASE4_COMPLETE.md)**: Full Phase 4 architecture & design
 - **[PHASE4_QUICK_REFERENCE.md](PHASE4_QUICK_REFERENCE.md)**: Quick start guide & API reference
@@ -367,7 +367,7 @@ pytest logis_ai_candidate_engine/tests/test_phase4_hybrid_scoring.py -v
 - Feature interactions (5 types)
 - Smart weight optimization (4 profiles)
 
-### 🔮 Phase 5: ML Training (Future)
+###  Phase 5: ML Training (Future)
 - Replace rules with learned weights
 - A/B testing framework
 - Real-time feedback loop
@@ -418,4 +418,4 @@ For questions or issues:
 
 ---
 
-**🚀 Ready for Production Deployment!**
+** Ready for Production Deployment!**
