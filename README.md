@@ -1,7 +1,7 @@
 # Logis AI Candidate Ranking Engine - v2.0.0
 
 ## Enterprise-Grade AI-Powered Candidate Ranking System
-**Built to Senior SDE/ML Engineer Standards (Google/Microsoft Level)**
+
 
 ---
 
