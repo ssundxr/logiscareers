@@ -45,18 +45,23 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         ]
     
     def validate_role(self, value):
-        """Only allow 'candidate' role for public registration."""
+        """Only allow 'candidate' and 'recruiter' roles for public registration."""
         request = self.context.get('request')
-        # Only allow admin to create admin/recruiter accounts
-        if value in ['admin', 'recruiter']:
+        # Only allow admin role if user is authenticated admin
+        if value == 'admin':
             if not request or not request.user.is_authenticated:
                 raise serializers.ValidationError(
-                    'Only authenticated administrators can create admin/recruiter accounts.'
+                    'Only authenticated administrators can create admin accounts.'
                 )
             if not getattr(request.user, 'is_admin_user', False):
                 raise serializers.ValidationError(
-                    'Only administrators can create admin/recruiter accounts.'
+                    'Only administrators can create admin accounts.'
                 )
+        # Allow candidate and recruiter for public registration
+        elif value not in ['candidate', 'recruiter']:
+            raise serializers.ValidationError(
+                'Invalid role. Choose either "candidate" or "recruiter".'
+            )
         return value
     
     def validate(self, attrs):

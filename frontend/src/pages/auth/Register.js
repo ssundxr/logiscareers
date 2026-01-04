@@ -137,9 +137,22 @@ const Register = () => {
               />
             </div>
 
-            {/* Note: Account type is hidden - all public registrations are candidates 
-                Admins and recruiters must be created by system administrators */}
-            <input type="hidden" name="role" value="candidate" />
+            <div className="form-group">
+              <label className="form-label">I am a</label>
+              <select
+                name="role"
+                className="form-select"
+                value={formData.role}
+                onChange={handleChange}
+                required
+              >
+                <option value="candidate">Job Seeker</option>
+                <option value="recruiter">Recruiter / HR</option>
+              </select>
+              <small style={{ color: '#666', fontSize: '0.85rem', marginTop: '4px', display: 'block' }}>
+                Note: Admin accounts can only be created by existing administrators
+              </small>
+            </div>
 
             <div className="form-row">
               <div className="form-group">

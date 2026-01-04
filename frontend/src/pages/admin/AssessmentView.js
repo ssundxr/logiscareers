@@ -37,6 +37,22 @@ const AssessmentView = () => {
     }
   };
 
+  const handleRerunAssessment = async () => {
+    setLoading(true);
+    try {
+      // Force a new evaluation
+      await assessmentService.evaluateApplication(id);
+      // Fetch the updated assessment
+      const response = await assessmentService.getAssessment(id);
+      setData(response.data);
+    } catch (error) {
+      console.error('Failed to re-run assessment:', error);
+      alert('Failed to re-run assessment. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const getScoreClass = (score) => {
     if (score >= 80) return 'excellent';
     if (score >= 60) return 'good';
@@ -527,8 +543,12 @@ const AssessmentView = () => {
         <button className="btn btn-secondary" onClick={() => navigate(-1)}>
           Back to Applications
         </button>
-        <button className="btn btn-primary" onClick={fetchAssessment}>
-          Re-run Assessment
+        <button 
+          className="btn btn-primary" 
+          onClick={handleRerunAssessment}
+          disabled={loading}
+        >
+          {loading ? 'Re-running...' : 'Re-run Assessment'}
         </button>
       </div>
     </div>

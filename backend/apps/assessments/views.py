@@ -100,10 +100,20 @@ class AssessmentViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Fetch fresh data with all related objects to avoid using cached/stale data
         application = get_object_or_404(
-            Application.objects.select_related('candidate__user', 'job'),
+            Application.objects.select_related('candidate__user', 'job').prefetch_related(
+                'candidate__work_experiences',
+                'candidate__education_history',
+                'candidate__it_skill_certifications',
+                'candidate__major_projects',
+                'candidate__honors_and_awards'
+            ),
             id=application_id
         )
+        
+        # Force refresh from database to get latest updates
+        application.candidate.refresh_from_db()
         
         # Convert to ML engine format
         candidate_data = application.candidate.to_ml_engine_format()
