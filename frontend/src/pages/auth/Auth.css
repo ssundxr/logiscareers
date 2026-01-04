@@ -1,0 +1,143 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-gray-100);
+  padding: var(--spacing-4);
+}
+
+.auth-container {
+  display: flex;
+  gap: var(--spacing-8);
+  max-width: 900px;
+  width: 100%;
+}
+
+.auth-card {
+  background-color: var(--color-white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  padding: var(--spacing-8);
+  width: 400px;
+}
+
+.auth-card-wide {
+  width: 500px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: var(--spacing-6);
+}
+
+.auth-title {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin-bottom: var(--spacing-2);
+}
+
+.auth-subtitle {
+  color: var(--color-gray-500);
+  margin: 0;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.auth-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  padding: var(--spacing-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+}
+
+.auth-footer {
+  margin-top: var(--spacing-6);
+  text-align: center;
+  color: var(--color-gray-500);
+}
+
+.auth-footer p {
+  margin: 0;
+}
+
+.auth-footer a {
+  color: var(--color-black);
+  font-weight: 600;
+}
+
+.auth-footer a:hover {
+  text-decoration: underline;
+}
+
+.auth-info {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--spacing-8);
+  background-color: var(--color-black);
+  color: var(--color-white);
+  border-radius: var(--radius-xl);
+  flex: 1;
+}
+
+.auth-info h2 {
+  color: var(--color-white);
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-6);
+}
+
+.auth-info ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.auth-info li {
+  color: var(--color-gray-300);
+  padding-left: var(--spacing-6);
+  position: relative;
+}
+
+.auth-info li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8px;
+  height: 8px;
+  background-color: var(--color-white);
+  border-radius: var(--radius-full);
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-4);
+}
+
+@media (max-width: 768px) {
+  .auth-container {
+    flex-direction: column;
+  }
+  
+  .auth-card,
+  .auth-card-wide {
+    width: 100%;
+  }
+  
+  .auth-info {
+    order: -1;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+}

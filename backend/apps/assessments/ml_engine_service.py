@@ -1,0 +1,368 @@
+"""
+ML Engine Integration Service for AI Assessments.
+Connects Django backend to the enterprise ML scoring engine.
+
+Enhanced with comprehensive field-by-field assessment and CV analysis.
+Author: Senior SDE/ML Architect
+Date: January 4, 2026
+"""
+
+import sys
+import logging
+from pathlib import Path
+from typing import Dict, Any, Optional
+from datetime import datetime
+
+# Add ML engine to path
+ML_ENGINE_PATH = Path(__file__).resolve().parent.parent.parent.parent / 'logis_ai_candidate_engine'
+sys.path.insert(0, str(ML_ENGINE_PATH.parent))
+
+logger = logging.getLogger(__name__)
+
+
+class MLEngineService:
+    """
+    Service class for interacting with the ML scoring engine.
+    
+    Features:
+    - Comprehensive field-by-field assessment
+    - Per-field scoring with explanations
+    - CV/Resume content analysis
+    - Semantic skill matching
+    - Real-time job-candidate matching
+    """
+    
+    _instance = None
+    _initialized = False
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+        return cls._instance
+    
+    def __init__(self):
+        if not self._initialized:
+            self._initialize_engine()
+            MLEngineService._initialized = True
+    
+    def _initialize_engine(self):
+        """Initialize ML engine components."""
+        try:
+            # Import ML engine components
+            from logis_ai_candidate_engine.core.scoring.skills_scorer import SkillsScorer
+            from logis_ai_candidate_engine.core.scoring.experience_scorer import ExperienceScorer
+            from logis_ai_candidate_engine.core.scoring.education_scorer import EducationScorer
+            from logis_ai_candidate_engine.core.scoring.salary_scorer import SalaryScorer
+            from logis_ai_candidate_engine.core.scoring.domain_scorer import DomainScorer
+            from logis_ai_candidate_engine.core.scoring.comprehensive_scorer import ComprehensiveScorer
+            from logis_ai_candidate_engine.core.aggregation.weighted_score_aggregator import WeightedScoreAggregator
+            from logis_ai_candidate_engine.core.rules.hard_rejection_engine import HardRejectionEngine
+            from logis_ai_candidate_engine.core.scoring.contextual_adjuster import ContextualAdjuster
+            from logis_ai_candidate_engine.core.scoring.confidence_calculator import ConfidenceCalculator
+            from logis_ai_candidate_engine.core.scoring.advanced_scorer import (
+                SmartWeightOptimizer, 
+                FeatureInteractionDetector
+            )
+            from logis_ai_candidate_engine.core.schemas.job import Job
+            from logis_ai_candidate_engine.core.schemas.candidate import Candidate
+            
+            # Store schema classes for later use
+            self.Job = Job
+            self.Candidate = Candidate
+            
+            # Initialize scorers
+            self.skills_scorer = SkillsScorer()
+            self.experience_scorer = ExperienceScorer()
+            self.education_scorer = EducationScorer()
+            self.salary_scorer = SalaryScorer()
+            self.domain_scorer = DomainScorer()
+            self.comprehensive_scorer = ComprehensiveScorer()  # New comprehensive scorer
+            self.aggregator = WeightedScoreAggregator()
+            self.rejection_engine = HardRejectionEngine()
+            
+            # Phase 4 components
+            self.contextual_adjuster = ContextualAdjuster()
+            self.confidence_calculator = ConfidenceCalculator()
+            self.weight_optimizer = SmartWeightOptimizer()
+            self.interaction_detector = FeatureInteractionDetector()
+            
+            self._engine_available = True
+            logger.info("ML Engine initialized successfully with comprehensive scorer")
+            
+        except ImportError as e:
+            logger.warning(f"ML Engine not available: {e}")
+            self._engine_available = False
+            self.comprehensive_scorer = None
+    
+    @property
+    def is_available(self) -> bool:
+        return self._engine_available
+    
+    def evaluate_candidate(
+        self,
+        candidate_data: Dict[str, Any],
+        job_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Evaluate a candidate against job requirements with comprehensive field-by-field assessment.
+        Returns detailed assessment with per-field scores and explanations.
+        Always runs full assessment even for rejected candidates.
+        """
+        if not self._engine_available:
+            return self._mock_evaluation(candidate_data, job_data)
+        
+        try:
+            # Convert dicts to Pydantic models for hard rejection engine
+            job = self.Job(**job_data)
+            candidate = self.Candidate(**candidate_data)
+            
+            # Check hard rejections first
+            rejection_result = self.rejection_engine.evaluate(job=job, candidate=candidate)
+            is_hard_rejected = not rejection_result.is_eligible
+            hard_rejection_reasons = [rejection_result.rejection_reason] if rejection_result.rejection_reason else []
+            hard_rejection_code = rejection_result.rejection_rule_code if is_hard_rejected else None
+            
+            # Always run comprehensive field-by-field assessment (even for rejected candidates)
+            # This provides detailed feedback on why the candidate was rejected
+            cv_text = candidate_data.get('cv_text', '')
+            comprehensive_result = self.comprehensive_scorer.assess(
+                candidate_data=candidate_data,
+                job_data=job_data,
+                cv_text=cv_text
+            )
+            
+            # Get smart weights based on job level
+            try:
+                weights, job_level_name = self.weight_optimizer.get_optimized_weights(job)
+                designation = job_level_name
+            except Exception:
+                weights = {'skills': 0.35, 'experience': 0.25, 'education': 0.15, 'salary': 0.15, 'domain': 0.10}
+                designation = job_data.get('designation', 'mid')
+            
+            # Build enhanced section scores from comprehensive assessment
+            section_scores = {}
+            field_assessments = []
+            
+            for section in comprehensive_result.sections:
+                section_scores[section.section_name] = {
+                    'score': section.total_score,
+                    'weight': section.weight,
+                    'match_level': section.match_level.value,
+                    'explanation': section.explanation,
+                    'details': {
+                        'fields': [f.to_dict() for f in section.fields]
+                    }
+                }
+                
+                # Flatten field assessments for easy frontend consumption
+                for field in section.fields:
+                    field_assessments.append({
+                        'section': section.section_label,
+                        'field': field.field_label,
+                        'candidate_value': field.candidate_value,
+                        'job_requirement': field.job_requirement,
+                        'score': field.score,
+                        'explanation': field.explanation,
+                        'match_level': field.match_level.value
+                    })
+            
+            # Include CV assessment if available
+            cv_assessment_data = None
+            if comprehensive_result.cv_assessment:
+                cv_assessment_data = comprehensive_result.cv_assessment.to_dict()
+            
+            # Apply contextual adjustments
+            contextual_adjustments = []
+            total_adjustment = 0
+            
+            # Example contextual adjustments based on scoring patterns
+            if comprehensive_result.total_score >= 80:
+                if section_scores.get('skills', {}).get('score', 0) >= 90:
+                    contextual_adjustments.append({
+                        'rule': 'Strong skills match bonus',
+                        'points': 3,
+                        'reason': 'Excellent technical skills alignment'
+                    })
+                    total_adjustment += 3
+            
+            if section_scores.get('experience', {}).get('score', 0) >= 85:
+                contextual_adjustments.append({
+                    'rule': 'Industry experience bonus',
+                    'points': 2,
+                    'reason': 'Strong industry-specific experience'
+                })
+                total_adjustment += 2
+            
+            if cv_assessment_data and cv_assessment_data.get('cv_score', 0) >= 80:
+                contextual_adjustments.append({
+                    'rule': 'CV quality bonus',
+                    'points': 2,
+                    'reason': 'Well-structured CV with relevant keywords'
+                })
+                total_adjustment += 2
+            
+            # Calculate final adjusted score (0 if hard rejected)
+            if is_hard_rejected:
+                adjusted_score = 0
+                recommendation = 'NOT RECOMMENDED - Hard rejection criteria met'
+                all_rejection_reasons = hard_rejection_reasons + (comprehensive_result.rejection_reasons or [])
+            else:
+                adjusted_score = min(100, max(0, comprehensive_result.total_score + total_adjustment))
+                recommendation = comprehensive_result.recommendation
+                all_rejection_reasons = comprehensive_result.rejection_reasons or []
+            
+            return {
+                'total_score': round(adjusted_score, 1),
+                'raw_score': comprehensive_result.total_score,
+                'is_rejected': is_hard_rejected or comprehensive_result.is_rejected,
+                'rejection_reasons': all_rejection_reasons,
+                'rejection_rule_code': hard_rejection_code,
+                'section_scores': section_scores,
+                'field_assessments': field_assessments,
+                'cv_assessment': cv_assessment_data,
+                'contextual_adjustments': contextual_adjustments,
+                'total_adjustment': total_adjustment,
+                'feature_interactions': [],
+                'confidence': {
+                    'level': self._get_confidence_level(comprehensive_result.confidence_score),
+                    'score': comprehensive_result.confidence_score
+                },
+                'weights_used': weights,
+                'job_level': designation,
+                'recommendation': recommendation,
+                'overall_explanation': comprehensive_result.overall_explanation,
+                'rule_trace': rejection_result.rule_trace,
+                'timestamp': comprehensive_result.timestamp,
+            }
+            
+        except Exception as e:
+            logger.error(f"ML Engine evaluation error: {e}", exc_info=True)
+            return self._mock_evaluation(candidate_data, job_data)
+    
+    def _get_confidence_level(self, score: float) -> str:
+        """Convert confidence score to level string."""
+        if score >= 0.8:
+            return 'high'
+        elif score >= 0.6:
+            return 'medium'
+        else:
+            return 'low'
+    
+    def _mock_evaluation(
+        self,
+        candidate_data: Dict[str, Any],
+        job_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Fallback mock evaluation when ML engine is unavailable.
+        Provides realistic mock data for testing purposes.
+        """
+        import random
+        
+        base_score = random.uniform(55, 85)
+        
+        # Generate mock field assessments
+        mock_fields = [
+            {'section': 'Personal Details', 'field': 'Nationality', 'score': random.randint(70, 100), 'explanation': 'Nationality assessment'},
+            {'section': 'Personal Details', 'field': 'Location', 'score': random.randint(60, 100), 'explanation': 'Location match assessment'},
+            {'section': 'Personal Details', 'field': 'Availability', 'score': random.randint(70, 100), 'explanation': 'Availability assessment'},
+            {'section': 'Experience', 'field': 'Total Experience', 'score': random.randint(50, 95), 'explanation': 'Experience years match'},
+            {'section': 'Experience', 'field': 'Industry', 'score': random.randint(60, 90), 'explanation': 'Industry alignment'},
+            {'section': 'Education', 'field': 'Education Level', 'score': random.randint(70, 100), 'explanation': 'Education qualification match'},
+            {'section': 'Skills', 'field': 'Required Skills', 'score': random.randint(40, 90), 'explanation': 'Skills match assessment'},
+            {'section': 'Skills', 'field': 'Preferred Skills', 'score': random.randint(50, 100), 'explanation': 'Preferred skills match'},
+            {'section': 'Salary', 'field': 'Expected Salary', 'score': random.randint(50, 100), 'explanation': 'Salary alignment'},
+        ]
+        
+        for field in mock_fields:
+            field['candidate_value'] = 'Mock value'
+            field['job_requirement'] = 'Mock requirement'
+            field['match_level'] = 'good' if field['score'] >= 70 else 'partial'
+        
+        return {
+            'total_score': round(base_score, 1),
+            'raw_score': round(base_score, 1),
+            'is_rejected': False,
+            'rejection_reasons': [],
+            'section_scores': {
+                'personal_details': {
+                    'score': random.randint(70, 95),
+                    'weight': 0.10,
+                    'match_level': 'good',
+                    'explanation': 'Personal details assessment (mock)',
+                    'details': {'fields': []}
+                },
+                'experience': {
+                    'score': random.randint(50, 90),
+                    'weight': 0.25,
+                    'match_level': 'good',
+                    'explanation': 'Experience assessment (mock)',
+                    'details': {'fields': []}
+                },
+                'education': {
+                    'score': random.randint(70, 95),
+                    'weight': 0.15,
+                    'match_level': 'good',
+                    'explanation': 'Education assessment (mock)',
+                    'details': {'fields': []}
+                },
+                'skills': {
+                    'score': random.randint(40, 85),
+                    'weight': 0.25,
+                    'match_level': 'partial',
+                    'explanation': 'Skills assessment (mock)',
+                    'details': {'fields': []}
+                },
+                'salary': {
+                    'score': random.randint(60, 100),
+                    'weight': 0.10,
+                    'match_level': 'good',
+                    'explanation': 'Salary assessment (mock)',
+                    'details': {'fields': []}
+                },
+                'cv_analysis': {
+                    'score': random.randint(50, 80),
+                    'weight': 0.15,
+                    'match_level': 'partial',
+                    'explanation': 'CV analysis (mock)',
+                    'details': {'fields': []}
+                },
+            },
+            'field_assessments': mock_fields,
+            'cv_assessment': {
+                'cv_score': random.randint(55, 80),
+                'cv_quality_score': random.randint(60, 85),
+                'content_relevance_score': random.randint(50, 85),
+                'keyword_match_score': random.randint(40, 80),
+                'experience_extraction_score': random.randint(60, 90),
+                'skills_extraction_score': random.randint(55, 85),
+                'explanation': 'Mock CV analysis - engine not available',
+                'matched_keywords': ['logistics', 'supply chain', 'management'],
+                'missing_keywords': ['specific skill 1', 'specific skill 2'],
+                'cv_insights': {'mock': True}
+            },
+            'contextual_adjustments': [],
+            'total_adjustment': 0,
+            'feature_interactions': [],
+            'confidence': {
+                'level': 'medium',
+                'score': 0.7,
+            },
+            'weights_used': {
+                'personal_details': 0.10,
+                'experience': 0.25,
+                'education': 0.15,
+                'skills': 0.25,
+                'salary': 0.10,
+                'cv_analysis': 0.15,
+            },
+            'job_level': 'mid',
+            'recommendation': 'CONSIDER - Review specific gaps before proceeding (mock)',
+            'overall_explanation': 'This is a mock evaluation - ML engine not available.',
+            'timestamp': datetime.now().isoformat(),
+            '_mock': True,
+        }
+
+
+# Singleton instance
+ml_engine = MLEngineService()
