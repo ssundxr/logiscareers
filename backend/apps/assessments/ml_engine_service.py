@@ -63,12 +63,18 @@ class MLEngineService:
                 SmartWeightOptimizer, 
                 FeatureInteractionDetector
             )
+            from logis_ai_candidate_engine.core.enhancement.candidate_intelligence import (
+                CandidateInsightGenerator,
+                RedFlagDetector
+            )
+            from logis_ai_candidate_engine.core.rules.data_completeness_validator import DataCompletenessValidator
             from logis_ai_candidate_engine.core.schemas.job import Job
             from logis_ai_candidate_engine.core.schemas.candidate import Candidate
             
             # Store schema classes for later use
             self.Job = Job
             self.Candidate = Candidate
+            self.data_validator = DataCompletenessValidator()
             
             # Initialize scorers
             self.skills_scorer = SkillsScorer()
@@ -86,8 +92,12 @@ class MLEngineService:
             self.weight_optimizer = SmartWeightOptimizer()
             self.interaction_detector = FeatureInteractionDetector()
             
+            # Enhancement components - Advanced candidate intelligence
+            self.insight_generator = CandidateInsightGenerator()
+            self.red_flag_detector = RedFlagDetector()
+            
             self._engine_available = True
-            logger.info("ML Engine initialized successfully with comprehensive scorer")
+            logger.info("ML Engine initialized successfully with comprehensive scorer and enhanced intelligence")
             
         except ImportError as e:
             logger.warning(f"ML Engine not available: {e}")
@@ -112,6 +122,99 @@ class MLEngineService:
             return self._mock_evaluation(candidate_data, job_data)
         
         try:
+            # ============================================
+            # STEP 1: DATA COMPLETENESS VALIDATION
+            # ============================================
+            is_candidate_valid, cand_critical, cand_important, cand_score = \
+                self.data_validator.validate_candidate_data(candidate_data)
+            
+            is_job_valid, job_critical, job_important, job_score = \
+                self.data_validator.validate_job_data(job_data)
+            
+            # DEBUG: Print candidate data keys for troubleshooting
+            logger.info(f"=== CANDIDATE DATA VALIDATION DEBUG ===")
+            logger.info(f"Candidate ID: {candidate_data.get('candidate_id', 'Unknown')}")
+            logger.info(f"Candidate Name: {candidate_data.get('full_name', 'Unknown')}")
+            logger.info(f"Available data keys: {list(candidate_data.keys())}")
+            logger.info(f"email: {candidate_data.get('email')}")
+            logger.info(f"mobile_number: {candidate_data.get('mobile_number')}")
+            logger.info(f"current_city: {candidate_data.get('current_city')}")
+            logger.info(f"total_experience_years: {candidate_data.get('total_experience_years')}")
+            logger.info(f"employment_history (count): {len(candidate_data.get('employment_history', []))}")
+            logger.info(f"skills (count): {len(candidate_data.get('skills', []))}")
+            logger.info(f"skills list: {candidate_data.get('skills', [])}")
+            logger.info(f"education_details (count): {len(candidate_data.get('education_details', []))}")
+            logger.info(f"expected_salary: {candidate_data.get('expected_salary')}")
+            logger.info(f"cv_text (length): {len(candidate_data.get('cv_text', ''))}")
+            logger.info(f"Validation Result - Valid: {is_candidate_valid}")
+            logger.info(f"Critical Missing ({len(cand_critical)}): {cand_critical}")
+            logger.info(f"Important Missing ({len(cand_important)}): {cand_important}")
+            logger.info(f"Completeness Score: {cand_score:.1f}%")
+            logger.info(f"=====================================")
+            
+            # Hard reject if critical data is missing
+            if not is_candidate_valid or not is_job_valid:
+                missing_fields = []
+                if cand_critical:
+                    missing_fields.extend([f"CANDIDATE: {m}" for m in cand_critical])
+                if job_critical:
+                    missing_fields.extend([f"JOB: {m}" for m in job_critical])
+                
+                return {
+                    'total_score': 0,
+                    'raw_score': 0,
+                    'is_rejected': True,
+                    'rejection_reasons': [
+                        f"INSUFFICIENT DATA FOR ASSESSMENT - Missing {len(missing_fields)} critical field(s)"
+                    ],
+                    'rejection_rule_code': 'DATA_INCOMPLETE',
+                    'data_quality': {
+                        'candidate_completeness': round(cand_score, 1),
+                        'job_completeness': round(job_score, 1),
+                        'missing_critical_fields': missing_fields,
+                        'missing_important_fields': cand_important + job_important,
+                        'status': 'REJECTED - INCOMPLETE DATA',
+                        'message': 'Cannot perform accurate AI assessment without critical data fields. Please complete the profile/job posting with all ⭐⭐ marked fields.',
+                        'expected_accuracy': '0% - Unreliable assessment'
+                    },
+                    'section_scores': {},
+                    'field_assessments': [],
+                    'contextual_adjustments': [],
+                    'total_adjustment': 0,
+                    'confidence': {'level': 'none', 'score': 0},
+                    'weights_used': {},
+                    'recommendation': 'NOT ASSESSABLE - Complete required data fields first',
+                    'timestamp': datetime.now().isoformat(),
+                    'insights': {
+                        'strengths': [],
+                        'weaknesses': ['Incomplete profile - missing critical data for accurate assessment'],
+                        'red_flags': [{
+                            'type': 'missing_data',
+                            'severity': 'CRITICAL',
+                            'description': f'Profile missing {len(cand_critical)} critical data fields',
+                            'impact': 'Cannot perform reliable AI assessment',
+                            'recommendation': 'Complete all ⭐⭐ marked mandatory fields before assessment'
+                        }] if cand_critical else [],
+                        'career_progression': 'unclear',
+                        'skill_currency_score': 0,
+                        'learning_potential': 0,
+                        'cultural_fit_score': 0,
+                        'recommendation': 'Complete profile with all required data before assessment',
+                        'key_highlights': []
+                    }
+                }
+            
+            # Log data quality warnings for important missing fields
+            if cand_important or job_important:
+                logger.warning(
+                    f"Assessment proceeding with reduced accuracy. "
+                    f"Missing {len(cand_important) + len(job_important)} important fields. "
+                    f"Expected accuracy: {((cand_score + job_score) / 2):.1f}%"
+                )
+            
+            # ============================================
+            # STEP 2: PROCEED WITH NORMAL ASSESSMENT
+            # ============================================
             # Convert dicts to Pydantic models for hard rejection engine
             job = self.Job(**job_data)
             candidate = self.Candidate(**candidate_data)
@@ -211,12 +314,73 @@ class MLEngineService:
                 recommendation = comprehensive_result.recommendation
                 all_rejection_reasons = comprehensive_result.rejection_reasons or []
             
+            # Generate enhanced candidate insights (red flags, strengths, weaknesses)
+            assessment_data = {
+                'total_score': adjusted_score,
+                'is_rejected': is_hard_rejected or comprehensive_result.is_rejected,
+                'section_scores': section_scores
+            }
+            
+            try:
+                candidate_insights = self.insight_generator.generate_insights(
+                    candidate_data, job_data, assessment_data
+                )
+                
+                # Convert insights to dict format
+                insights_dict = {
+                    'strengths': candidate_insights.strengths,
+                    'weaknesses': candidate_insights.weaknesses,
+                    'red_flags': [
+                        {
+                            'type': flag.flag_type,
+                            'severity': flag.severity.value,
+                            'description': flag.description,
+                            'impact': flag.impact,
+                            'recommendation': flag.recommendation
+                        }
+                        for flag in candidate_insights.red_flags
+                    ],
+                    'career_progression': candidate_insights.career_progression.value,
+                    'skill_currency_score': round(candidate_insights.skill_currency_score, 1),
+                    'learning_potential': round(candidate_insights.learning_potential, 1),
+                    'cultural_fit_score': round(candidate_insights.cultural_fit_score, 1),
+                    'recommendation': candidate_insights.recommendation,
+                    'key_highlights': candidate_insights.key_highlights
+                }
+            except Exception as e:
+                logger.warning(f"Error generating candidate insights: {e}")
+                insights_dict = {
+                    'strengths': [],
+                    'weaknesses': [],
+                    'red_flags': [],
+                    'career_progression': 'unclear',
+                    'skill_currency_score': 50.0,
+                    'learning_potential': 50.0,
+                    'cultural_fit_score': 50.0,
+                    'recommendation': recommendation,
+                    'key_highlights': []
+                }
+            
+            # Calculate assessment quality based on data completeness
+            assessment_quality = self.data_validator._estimate_assessment_quality(
+                cand_score, job_score, len(cand_critical), len(job_critical)
+            )
+            
             return {
                 'total_score': round(adjusted_score, 1),
                 'raw_score': comprehensive_result.total_score,
                 'is_rejected': is_hard_rejected or comprehensive_result.is_rejected,
                 'rejection_reasons': all_rejection_reasons,
                 'rejection_rule_code': hard_rejection_code,
+                'data_quality': {
+                    'candidate_completeness': round(cand_score, 1),
+                    'job_completeness': round(job_score, 1),
+                    'missing_important_fields': cand_important + job_important,
+                    'assessment_quality': assessment_quality['quality'],
+                    'expected_accuracy': assessment_quality['accuracy'],
+                    'confidence_level': assessment_quality['confidence'],
+                    'message': assessment_quality['message']
+                },
                 'section_scores': section_scores,
                 'field_assessments': field_assessments,
                 'cv_assessment': cv_assessment_data,
@@ -233,6 +397,7 @@ class MLEngineService:
                 'overall_explanation': comprehensive_result.overall_explanation,
                 'rule_trace': rejection_result.rule_trace,
                 'timestamp': comprehensive_result.timestamp,
+                'insights': insights_dict,  # NEW: Enhanced candidate insights
             }
             
         except Exception as e:

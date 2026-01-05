@@ -1,0 +1,155 @@
+/* Field Requirement Indicators */
+.required-field {
+  font-weight: 600;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.important-field {
+  font-weight: 500;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Professional field badges */
+.field-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  margin-left: 8px;
+  cursor: help;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.badge-required {
+  background-color: #d32f2f;
+  color: white;
+  border: 1px solid #b71c1c;
+}
+
+.badge-important {
+  background-color: #f57c00;
+  color: white;
+  border: 1px solid #e65100;
+}
+
+/* Requirement badges in banner */
+.requirement-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+/* Required field asterisk */
+.required-field::after {
+  content: '*';
+  color: #dc2626;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+/* Data Requirements Banner */
+.data-requirements-banner {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 8px;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.1);
+}
+
+.data-requirements-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.data-requirements-icon {
+  font-size: 28px;
+}
+
+.data-requirements-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #78350f;
+  margin: 0;
+}
+
+.data-requirements-description {
+  color: #92400e;
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 8px 0;
+}
+
+.data-requirements-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.requirement-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #78350f;
+}
+
+.requirement-critical {
+  font-weight: 600;
+}
+
+.requirement-important {
+  font-weight: 500;
+}
+
+/* Skills help text */
+.skills-help-text {
+  background-color: #e3f2fd;
+  border-left: 4px solid #1976d2;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #0d47a1;
+}
+
+.skills-help-text strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #01579b;
+}
+
+/* Form field help text */
+.field-help-text {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.field-help-text.critical {
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.field-help-text.important {
+  color: #f59e0b;
+}

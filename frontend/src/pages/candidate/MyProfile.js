@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { candidateService } from '../../services/api';
 import './Candidate.css';
+import './FieldRequirements.css';
 
 const MyProfile = () => {
   const [profile, setProfile] = useState(null);
@@ -79,10 +80,11 @@ const MyProfile = () => {
   };
 
   const handleSkillsChange = (field, value) => {
-    const skills = value.split(',').map(s => s.trim()).filter(s => s);
+    // Store the raw string value to allow typing commas
+    // Will be converted to array when saving
     setFormData(prev => ({
       ...prev,
-      [field]: skills
+      [field]: value
     }));
   };
 
@@ -131,6 +133,17 @@ const MyProfile = () => {
 
     try {
       const dataToSend = { ...formData };
+      
+      // Convert skill strings to arrays if they're strings
+      ['professional_skills', 'functional_skills', 'it_skills'].forEach(field => {
+        if (typeof dataToSend[field] === 'string') {
+          dataToSend[field] = dataToSend[field]
+            .split(',')
+            .map(s => s.trim())
+            .filter(s => s.length > 0);
+        }
+      });
+      
       // Remove read-only and file fields
       delete dataToSend.cv_file;
       delete dataToSend.photo;
@@ -262,10 +275,31 @@ const MyProfile = () => {
       {success && <div className="alert alert-success mb-4">{success}</div>}
       {error && <div className="alert alert-danger mb-4">{error}</div>}
 
+      {/* Data Requirements Banner */}
+      <div className="data-requirements-banner">
+        <div className="data-requirements-header">
+          <h3 className="data-requirements-title">Complete Your Profile for Accurate AI Assessment</h3>
+        </div>
+        <p className="data-requirements-description">
+          To ensure our AI provides accurate job matching (90-95% accuracy), please complete all <strong>REQUIRED</strong> fields. 
+          Adding <strong>IMPORTANT</strong> fields will further improve assessment quality.
+        </p>
+        <div className="data-requirements-list">
+          <div className="requirement-item requirement-critical">
+            <span className="requirement-badge badge-required">REQUIRED</span>
+            <span><strong>Critical Fields:</strong> Mobile Number, Current Location, Total Experience, Work History (at least 1), Skills (at least 3), Education (at least 1), Expected Salary, CV/Resume</span>
+          </div>
+          <div className="requirement-item requirement-important">
+            <span className="requirement-badge badge-important">IMPORTANT</span>
+            <span><strong>Recommended Fields:</strong> GCC Experience, Job Responsibilities, Employment Dates, Certifications, Current Salary, Professional Summary</span>
+          </div>
+        </div>
+      </div>
+
       {/* Upload Section - Photo & Resume */}
       <div className="profile-card">
         <div className="profile-card-header">
-          <h2>Photo & Resume</h2>
+          <h2>Photo & Resume <span className="field-badge badge-required" title="CV/Resume is Critical">REQUIRED</span></h2>
         </div>
         <div className="profile-card-body">
           <div className="upload-section">
@@ -362,7 +396,7 @@ const MyProfile = () => {
         {/* Personal Information */}
         <div className="profile-card">
           <div className="profile-card-header">
-            <h2>Personal Information</h2>
+            <h2>Personal Information <span className="critical-star" title="Contains critical required fields">⭐⭐</span></h2>
           </div>
           <div className="profile-card-body">
             <div className="profile-grid">
@@ -394,7 +428,7 @@ const MyProfile = () => {
                 </select>
               </div>
               <div className="form-group">
-                <label>Mobile Number</label>
+                <label className="required-field">Mobile Number <span className="field-badge badge-required" title="Critical - Required for AI Assessment">REQUIRED</span></label>
                 <input
                   type="tel"
                   name="mobile_number"
@@ -402,6 +436,7 @@ const MyProfile = () => {
                   value={formData.mobile_number || ''}
                   onChange={handleChange}
                   placeholder="+971 50 123 4567"
+                  required
                 />
               </div>
               <div className="form-group">
@@ -460,7 +495,7 @@ const MyProfile = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Current Location</label>
+                <label className="required-field">Current Location <span className="field-badge badge-required" title="Critical - Required for AI Assessment">REQUIRED</span></label>
                 <input
                   type="text"
                   name="current_location"
@@ -468,6 +503,7 @@ const MyProfile = () => {
                   value={formData.current_location || ''}
                   onChange={handleChange}
                   placeholder="City, Country"
+                  required
                 />
               </div>
               <div className="form-group">
@@ -541,12 +577,12 @@ const MyProfile = () => {
         {/* Experience */}
         <div className="profile-card">
           <div className="profile-card-header">
-            <h2>Experience</h2>
+            <h2>Experience <span className="field-badge badge-required" title="Critical - Required for AI Assessment">REQUIRED</span></h2>
           </div>
           <div className="profile-card-body">
             <div className="profile-grid">
               <div className="form-group">
-                <label>Total Experience (months)</label>
+                <label className="required-field">Total Experience (months) <span className="field-badge badge-required" title="Critical - Required for AI Assessment">REQUIRED</span></label>
                 <input
                   type="number"
                   name="total_experience_months"
@@ -554,10 +590,11 @@ const MyProfile = () => {
                   value={formData.total_experience_months || ''}
                   onChange={handleChange}
                   min="0"
+                  required
                 />
               </div>
               <div className="form-group">
-                <label>GCC Experience (months)</label>
+                <label className="important-field">GCC Experience (months) <span className="field-badge badge-important" title="Important - Recommended for better accuracy">IMPORTANT</span></label>
                 <input
                   type="number"
                   name="gcc_experience_months"
@@ -574,7 +611,7 @@ const MyProfile = () => {
         {/* Employment Details */}
         <div className="profile-card">
           <div className="profile-card-header">
-            <h2>Employment Details</h2>
+            <h2>Employment Details <span className="field-badge badge-required" title="At least 1 work history entry required">REQUIRED</span></h2>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
@@ -760,7 +797,7 @@ const MyProfile = () => {
         {/* Education and Professional Certifications */}
         <div className="profile-card">
           <div className="profile-card-header">
-            <h2>Education and Professional Certifications</h2>
+            <h2>Education and Professional Certifications <span className="field-badge badge-required" title="At least 1 education entry required">REQUIRED</span></h2>
             <button
               type="button"
               className="btn btn-secondary btn-sm"
@@ -1216,7 +1253,7 @@ const MyProfile = () => {
           <div className="profile-card-body">
             <div className="profile-grid">
               <div className="form-group">
-                <label>Current Salary (AED)</label>
+                <label className="important-field">Current Salary (AED) <span className="field-badge badge-important" title="Important - Recommended for better accuracy">IMPORTANT</span></label>
                 <input
                   type="number"
                   name="current_salary"
@@ -1228,7 +1265,7 @@ const MyProfile = () => {
                 />
               </div>
               <div className="form-group">
-                <label>Expected Salary (AED)</label>
+                <label className="required-field">Expected Salary (AED) <span className="field-badge badge-required" title="Critical - Required for AI Assessment">REQUIRED</span></label>
                 <input
                   type="number"
                   name="desired_monthly_salary"
@@ -1246,38 +1283,44 @@ const MyProfile = () => {
         {/* Skills */}
         <div className="profile-card">
           <div className="profile-card-header">
-            <h2>Skills</h2>
+            <h2>Skills <span className="field-badge badge-required" title="At least 3 skills required across all categories">REQUIRED</span></h2>
           </div>
           <div className="profile-card-body">
+            <div className="skills-help-text">
+              <strong>How to enter multiple skills:</strong> Type each skill separated by a comma. Example: Communication, Leadership, Project Management
+            </div>
             <div className="form-group">
-              <label>Professional Skills (comma-separated)</label>
+              <label>Professional Skills</label>
               <input
                 type="text"
                 className="form-input"
-                value={formData.professional_skills?.join(', ') || ''}
+                value={Array.isArray(formData.professional_skills) ? formData.professional_skills.join(', ') : (formData.professional_skills || '')}
                 onChange={(e) => handleSkillsChange('professional_skills', e.target.value)}
-                placeholder="e.g., Project Management, Leadership, Communication"
+                placeholder="Type skills separated by commas: Communication, Leadership, Project Management"
               />
+              <p className="field-help-text">Soft skills like communication, leadership, teamwork, etc.</p>
             </div>
             <div className="form-group">
-              <label>Functional Skills (comma-separated)</label>
+              <label>Functional Skills</label>
               <input
                 type="text"
                 className="form-input"
-                value={formData.functional_skills?.join(', ') || ''}
+                value={Array.isArray(formData.functional_skills) ? formData.functional_skills.join(', ') : (formData.functional_skills || '')}
                 onChange={(e) => handleSkillsChange('functional_skills', e.target.value)}
-                placeholder="e.g., Financial Analysis, Marketing, Sales"
+                placeholder="Type skills separated by commas: Financial Analysis, Marketing, Sales"
               />
+              <p className="field-help-text">Domain-specific skills like financial analysis, marketing, operations, etc.</p>
             </div>
             <div className="form-group">
-              <label>IT Skills (comma-separated)</label>
+              <label>IT Skills</label>
               <input
                 type="text"
                 className="form-input"
-                value={formData.it_skills?.join(', ') || ''}
+                value={Array.isArray(formData.it_skills) ? formData.it_skills.join(', ') : (formData.it_skills || '')}
                 onChange={(e) => handleSkillsChange('it_skills', e.target.value)}
-                placeholder="e.g., Excel, SAP, Python"
+                placeholder="Type skills separated by commas: Excel, SAP, Python, SQL"
               />
+              <p className="field-help-text">Technical skills like Excel, SAP, Python, SQL, etc.</p>
             </div>
           </div>
         </div>

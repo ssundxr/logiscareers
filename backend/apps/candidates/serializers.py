@@ -8,6 +8,7 @@ from .models import (
     CandidateProfile, Education, WorkExperience, Application,
     MajorProject, HonorAndAward, ITSkillCertification
 )
+from .utils import extract_cv_text, clean_cv_text
 
 User = get_user_model()
 
@@ -186,9 +187,24 @@ class CandidateProfileCreateSerializer(serializers.ModelSerializer):
         honors_data = validated_data.pop('honors_awards', None)
         it_skills_data = validated_data.pop('it_skill_certifications', None)
         
+        # Check if cv_file is being updated
+        cv_file_updated = 'cv_file' in validated_data and validated_data['cv_file']
+        
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+        
+        # Extract CV text if a new CV file was uploaded
+        if cv_file_updated:
+            try:
+                if instance.cv_file and instance.cv_file.path:
+                    cv_text = extract_cv_text(instance.cv_file.path)
+                    if cv_text:
+                        instance.cv_text = clean_cv_text(cv_text)
+                        instance.save(update_fields=['cv_text'])
+                        print(f"Successfully extracted {len(cv_text)} characters from CV")
+            except Exception as e:
+                print(f"Error extracting CV text: {e}")
         
         if education_data is not None:
             instance.education_history.all().delete()

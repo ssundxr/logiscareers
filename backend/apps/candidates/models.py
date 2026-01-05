@@ -142,7 +142,16 @@ class CandidateProfile(models.Model):
         education_order = ['phd', 'doctorate', 'masters', 'master', 'bachelors', 'bachelor', 'diploma', 'high school']
         highest = None
         for edu in self.education_history.all():
-            if edu.course:
+            # Check education_level field first (user's explicit selection)
+            if edu.education_level:
+                level_lower = edu.education_level.lower()
+                for level in education_order:
+                    if level in level_lower:
+                        if highest is None or education_order.index(level) < education_order.index(highest):
+                            highest = level
+                        break
+            # Fallback to course field if education_level is not set
+            elif edu.course:
                 course_lower = edu.course.lower()
                 for level in education_order:
                     if level in course_lower:
@@ -266,7 +275,7 @@ class CandidateProfile(models.Model):
             
             # Compensation
             'current_salary': self.current_salary,
-            'expected_salary': self.desired_monthly_salary or 0,
+            'expected_salary': self.desired_monthly_salary if self.desired_monthly_salary is not None else 0,
             'currency': self.salary_currency,
             
             # Professional Profile

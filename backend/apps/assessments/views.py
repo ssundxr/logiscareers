@@ -330,6 +330,17 @@ class AssessmentViewSet(viewsets.ViewSet):
                 'confidence': assessment.get('confidence', {}),
                 'recommendation': assessment.get('recommendation', ''),
                 'overall_explanation': assessment.get('overall_explanation', ''),
+                'insights': assessment.get('insights', {
+                    'strengths': [],
+                    'weaknesses': [],
+                    'red_flags': [],
+                    'career_progression': 'unclear',
+                    'skill_currency_score': 0,
+                    'learning_potential': 0,
+                    'cultural_fit_score': 0,
+                    'recommendation': '',
+                    'key_highlights': []
+                }),  # Include insights from enhanced assessment
             },
             'assessed_at': application.assessed_at.isoformat() if application.assessed_at else None,
             'cv_data': self._build_cv_comparison(candidate),
@@ -431,7 +442,7 @@ class AssessmentViewSet(viewsets.ViewSet):
             'projects': projects,
             'awards': awards,
             'keywords': self._extract_keywords_from_experience(candidate),
-            'cv_text': candidate.cv_text[:500] + '...' if candidate.cv_text and len(candidate.cv_text) > 500 else candidate.cv_text,
+            'cv_text': candidate.cv_text,  # Full CV text for analysis
         }
     
     def _build_jd_comparison(self, job: Job) -> dict:
@@ -513,5 +524,205 @@ def engine_status(request):
             'confidence_calculation',
             'feature_interactions',
             'smart_weights',
+            'red_flag_detection',
+            'career_progression_analysis',
+            'skill_currency_analysis',
+            'candidate_ranking',
         ]
     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def rank_candidates(request):
+    """
+    Rank multiple candidates for a job using intelligent multi-dimensional comparison.
+    
+    Request body:
+    {
+        "job_id": 1,
+        "application_ids": [1, 2, 3, 4, 5]  # Optional, if not provided ranks all applications for the job
+    }
+    
+    Returns:
+    {
+        "job_id": 1,
+        "job_title": "Senior Software Engineer",
+        "total_candidates": 5,
+        "ranked_candidates": [
+            {
+                "candidate_id": 3,
+                "candidate_name": "John Doe",
+                "rank": 1,
+                "tier": "S",
+                "overall_score": 94.5,
+                "skills_match": 95.0,
+                "experience_fit": 92.0,
+                "interview_priority": "urgent",
+                "key_strengths": [...],
+                "concerns": [...]
+            },
+            ...
+        ],
+        "tier_distribution": {
+            "S": 1,
+            "A": 2,
+            "B": 1,
+            "C": 1,
+            "D": 0
+        },
+        "recommendation_summary": "3 candidates recommended for interview",
+        "timestamp": "2026-01-04T10:30:00Z"
+    }
+    """
+    from logis_ai_candidate_engine.core.enhancement.ranking_system import CandidateRanker
+    
+    job_id = request.data.get('job_id')
+    application_ids = request.data.get('application_ids')
+    
+    if not job_id:
+        return Response(
+            {'error': 'job_id is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    # Get job
+    try:
+        job = get_object_or_404(Job, id=job_id)
+    except Exception as e:
+        return Response(
+            {'error': f'Job not found: {str(e)}'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Get applications
+    if application_ids:
+        applications = Application.objects.filter(
+            id__in=application_ids,
+            job_id=job_id
+        ).select_related('candidate')
+    else:
+        applications = Application.objects.filter(
+            job_id=job_id
+        ).select_related('candidate')
+    
+    if not applications.exists():
+        return Response(
+            {'error': 'No applications found for this job'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Prepare candidate data for ranking
+    candidate_assessments = []
+    
+    for app in applications:
+        candidate = app.candidate
+        
+        # Prepare candidate data
+        candidate_data = {
+            'id': candidate.id,
+            'name': candidate.name,
+            'email': candidate.email,
+            'phone': candidate.phone,
+            'current_location': candidate.current_location,
+            'skills': candidate.skills or [],
+            'total_experience': candidate.total_experience or 0,
+            'current_designation': candidate.current_designation,
+            'current_salary': candidate.current_salary,
+            'expected_salary': candidate.expected_salary,
+            'notice_period': candidate.notice_period,
+            'education': candidate.education or [],
+            'certifications': candidate.certifications or [],
+            'work_history': candidate.work_history or [],
+            'cv_text': candidate.cv_text or '',
+        }
+        
+        # Prepare job data
+        job_data = {
+            'id': job.id,
+            'title': job.title,
+            'required_skills': job.required_skills or [],
+            'preferred_skills': job.preferred_skills or [],
+            'min_experience': job.min_experience or 0,
+            'max_experience': job.max_experience or 100,
+            'designation': job.designation,
+            'min_salary': job.min_salary,
+            'max_salary': job.max_salary,
+            'location': job.location,
+            'education_requirements': job.education_requirements or [],
+            'job_description': job.description,
+        }
+        
+        # Get assessment
+        try:
+            assessment = ml_engine.evaluate_candidate(candidate_data, job_data)
+            
+            candidate_assessments.append({
+                'candidate_id': candidate.id,
+                'candidate_name': candidate.name,
+                'assessment': assessment,
+                'application_id': app.id,
+                'applied_date': app.created_at.isoformat() if hasattr(app, 'created_at') else None
+            })
+        except Exception as e:
+            # Log error but continue with other candidates
+            print(f"Error assessing candidate {candidate.id}: {e}")
+            continue
+    
+    if not candidate_assessments:
+        return Response(
+            {'error': 'No valid assessments could be generated'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    
+    # Rank candidates
+    ranker = CandidateRanker()
+    ranking_result = ranker.rank_candidates(candidate_assessments, job_data)
+    
+    # Format response
+    ranked_candidates_data = []
+    for ranked in ranking_result.ranked_candidates:
+        candidate_data = next(
+            (c for c in candidate_assessments if c['candidate_id'] == ranked.candidate_id),
+            None
+        )
+        
+        if candidate_data:
+            insights = candidate_data['assessment'].get('insights', {})
+            
+            ranked_candidates_data.append({
+                'rank': ranked.rank,
+                'candidate_id': ranked.candidate_id,
+                'candidate_name': ranked.candidate_name,
+                'application_id': candidate_data['application_id'],
+                'tier': ranked.tier,
+                'overall_score': ranked.overall_score,
+                'skills_match': ranked.skills_match,
+                'experience_fit': ranked.experience_fit,
+                'salary_fit': ranked.salary_fit,
+                'cultural_fit': ranked.cultural_fit,
+                'learning_potential': ranked.learning_potential,
+                'interview_priority': ranked.interview_priority,
+                'key_strengths': insights.get('strengths', []),
+                'key_weaknesses': insights.get('weaknesses', []),
+                'red_flags': insights.get('red_flags', []),
+                'career_progression': insights.get('career_progression', 'unclear'),
+                'skill_currency_score': insights.get('skill_currency_score', 0),
+                'recommendation': insights.get('recommendation', ''),
+                'applied_date': candidate_data.get('applied_date')
+            })
+    
+    response_data = {
+        'job_id': job.id,
+        'job_title': job.title,
+        'total_candidates': ranking_result.total_candidates,
+        'ranked_candidates': ranked_candidates_data,
+        'tier_distribution': ranking_result.tier_distribution,
+        'top_candidates': ranking_result.top_candidates,
+        'comparison_matrix': ranking_result.comparison_matrix,
+        'recommendation_summary': ranking_result.recommendation_summary,
+        'timestamp': timezone.now().isoformat()
+    }
+    
+    return Response(response_data)
+

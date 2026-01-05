@@ -18,6 +18,7 @@ from .serializers import (
     ApplicationSerializer,
     ApplicationCreateSerializer
 )
+from .utils import extract_cv_text, clean_cv_text
 
 
 class IsAdminUser(permissions.BasePermission):
@@ -223,8 +224,25 @@ class MyCandidateProfileViewSet(viewsets.GenericViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
+        # Save the file first
         profile.cv_file = cv_file
         profile.save()
+        
+        # Extract text from the uploaded CV
+        try:
+            if profile.cv_file and profile.cv_file.path:
+                cv_text = extract_cv_text(profile.cv_file.path)
+                if cv_text:
+                    profile.cv_text = clean_cv_text(cv_text)
+                    profile.save()
+                    print(f"Successfully extracted {len(cv_text)} characters from CV")
+                else:
+                    print(f"Could not extract text from CV file: {profile.cv_file.path}")
+        except Exception as e:
+            print(f"Error extracting CV text: {e}")
+            # Don't fail the request if text extraction fails
+            pass
+        
         return Response(CandidateProfileSerializer(profile).data)
     
     @action(detail=False, methods=['post'], url_path='upload-photo')
