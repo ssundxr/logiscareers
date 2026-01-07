@@ -70,6 +70,8 @@ class MLEngineService:
             from logis_ai_candidate_engine.core.rules.data_completeness_validator import DataCompletenessValidator
             from logis_ai_candidate_engine.core.schemas.job import Job
             from logis_ai_candidate_engine.core.schemas.candidate import Candidate
+            from logis_ai_candidate_engine.core.scoring.growth_potential_analyzer import GrowthPotentialAnalyzer
+            from logis_ai_candidate_engine.core.scoring.smart_recommendation_engine import SmartRecommendationEngine
             
             # Store schema classes for later use
             self.Job = Job
@@ -95,6 +97,10 @@ class MLEngineService:
             # Enhancement components - Advanced candidate intelligence
             self.insight_generator = CandidateInsightGenerator()
             self.red_flag_detector = RedFlagDetector()
+            
+            # NEW: Growth potential and smart recommendations
+            self.growth_analyzer = GrowthPotentialAnalyzer()
+            self.recommendation_engine = SmartRecommendationEngine()
             
             self._engine_available = True
             logger.info("ML Engine initialized successfully with comprehensive scorer and enhanced intelligence")
@@ -366,6 +372,105 @@ class MLEngineService:
                 cand_score, job_score, len(cand_critical), len(job_critical)
             )
             
+            # ============================================
+            # STEP 3: GROWTH POTENTIAL ANALYSIS (NEW)
+            # ============================================
+            try:
+                growth_potential = self.growth_analyzer.analyze(
+                    candidate_data=candidate_data,
+                    job_data=job_data,
+                    current_assessment_score=adjusted_score
+                )
+                
+                growth_data = {
+                    'growth_potential_score': growth_potential.growth_potential_score,
+                    'learning_agility': growth_potential.learning_agility,
+                    'career_trajectory_score': growth_potential.career_trajectory_score,
+                    'skill_acquisition_rate': growth_potential.skill_acquisition_rate,
+                    'adaptability_score': growth_potential.adaptability_score,
+                    'tier': growth_potential.tier,
+                    'indicators': growth_potential.indicators,
+                    'recommendation': growth_potential.recommendation,
+                    'key_factors': growth_potential.key_factors
+                }
+                
+                logger.info(f"Growth Potential Analysis: {growth_potential.growth_potential_score:.1f}/100 - {growth_potential.tier}")
+            except Exception as e:
+                logger.warning(f"Error calculating growth potential: {e}")
+                growth_data = {
+                    'growth_potential_score': 50.0,
+                    'learning_agility': 50.0,
+                    'career_trajectory_score': 50.0,
+                    'skill_acquisition_rate': 50.0,
+                    'adaptability_score': 50.0,
+                    'tier': 'not_assessed',
+                    'indicators': [],
+                    'recommendation': 'Growth potential not assessed due to insufficient data',
+                    'key_factors': {}
+                }
+            
+            # ============================================
+            # STEP 4: SMART RECOMMENDATION (NEW)
+            # ============================================
+            try:
+                current_assessment = {
+                    'total_score': adjusted_score,
+                    'confidence': {
+                        'level': self._get_confidence_level(comprehensive_result.confidence_score),
+                        'score': comprehensive_result.confidence_score
+                    },
+                    'is_rejected': is_hard_rejected or comprehensive_result.is_rejected,
+                    'insights': insights_dict
+                }
+                
+                smart_rec = self.recommendation_engine.generate_recommendation(
+                    assessment_data=current_assessment,
+                    growth_potential_score=growth_data['growth_potential_score'],
+                    candidate_data=candidate_data,
+                    job_data=job_data
+                )
+                
+                smart_recommendation = {
+                    'action': smart_rec.action.value,
+                    'priority': smart_rec.priority.value,
+                    'message': smart_rec.message,
+                    'confidence_interval': {
+                        'point_estimate': smart_rec.confidence_interval.point_estimate,
+                        'lower_bound': smart_rec.confidence_interval.lower_bound,
+                        'upper_bound': smart_rec.confidence_interval.upper_bound,
+                        'margin_of_error': smart_rec.confidence_interval.margin_of_error,
+                        'confidence_level': smart_rec.confidence_interval.confidence_level,
+                        'display': f"{smart_rec.confidence_interval.point_estimate:.0f} ± {smart_rec.confidence_interval.margin_of_error:.0f} ({smart_rec.confidence_interval.confidence_level}% confidence)"
+                    },
+                    'risk_level': smart_rec.risk_level,
+                    'next_steps': smart_rec.next_steps,
+                    'estimated_success_probability': smart_rec.estimated_success_probability,
+                    'interview_questions_focus': smart_rec.interview_questions_focus,
+                    'decision_factors': smart_rec.decision_factors
+                }
+                
+                logger.info(f"Smart Recommendation: {smart_rec.action.value} - {smart_rec.priority.value} priority")
+            except Exception as e:
+                logger.warning(f"Error generating smart recommendation: {e}")
+                smart_recommendation = {
+                    'action': 'shortlist',
+                    'priority': 'medium',
+                    'message': recommendation,
+                    'confidence_interval': {
+                        'point_estimate': adjusted_score,
+                        'lower_bound': max(0, adjusted_score - 5),
+                        'upper_bound': min(100, adjusted_score + 5),
+                        'margin_of_error': 5,
+                        'confidence_level': 90,
+                        'display': f"{adjusted_score:.0f} ± 5 (90% confidence)"
+                    },
+                    'risk_level': 'medium',
+                    'next_steps': ['Review assessment details'],
+                    'estimated_success_probability': adjusted_score,
+                    'interview_questions_focus': [],
+                    'decision_factors': {}
+                }
+            
             return {
                 'total_score': round(adjusted_score, 1),
                 'raw_score': comprehensive_result.total_score,
@@ -397,7 +502,9 @@ class MLEngineService:
                 'overall_explanation': comprehensive_result.overall_explanation,
                 'rule_trace': rejection_result.rule_trace,
                 'timestamp': comprehensive_result.timestamp,
-                'insights': insights_dict,  # NEW: Enhanced candidate insights
+                'insights': insights_dict,
+                'growth_potential': growth_data,  # NEW
+                'smart_recommendation': smart_recommendation,  # NEW
             }
             
         except Exception as e:

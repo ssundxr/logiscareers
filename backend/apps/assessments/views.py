@@ -341,6 +341,35 @@ class AssessmentViewSet(viewsets.ViewSet):
                     'recommendation': '',
                     'key_highlights': []
                 }),  # Include insights from enhanced assessment
+                'growth_potential': assessment.get('growth_potential', {
+                    'growth_potential_score': 0,
+                    'learning_agility': 0,
+                    'career_trajectory_score': 0,
+                    'skill_acquisition_rate': 0,
+                    'adaptability_score': 0,
+                    'tier': 'not_assessed',
+                    'indicators': [],
+                    'recommendation': '',
+                    'key_factors': {}
+                }),  # NEW: Growth potential analysis
+                'smart_recommendation': assessment.get('smart_recommendation', {
+                    'action': 'shortlist',
+                    'priority': 'medium',
+                    'message': '',
+                    'confidence_interval': {
+                        'point_estimate': 0,
+                        'lower_bound': 0,
+                        'upper_bound': 0,
+                        'margin_of_error': 0,
+                        'confidence_level': 90,
+                        'display': ''
+                    },
+                    'risk_level': 'medium',
+                    'next_steps': [],
+                    'estimated_success_probability': 0,
+                    'interview_questions_focus': [],
+                    'decision_factors': {}
+                }),  # NEW: Smart hiring recommendation
             },
             'assessed_at': application.assessed_at.isoformat() if application.assessed_at else None,
             'cv_data': self._build_cv_comparison(candidate),
