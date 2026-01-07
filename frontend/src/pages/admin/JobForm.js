@@ -71,6 +71,7 @@ const initialFormState = {
   preferred_education: '',
   nationality: '',
   gender_preference: 'no_preference',
+  visa_requirement: '',
   preferred_locations: [],
   required_skills: [],
   preferred_skills: [],
@@ -414,6 +415,18 @@ const JobForm = () => {
                   {countryOptions.map((country) => (
                     <option key={country} value={country}>{country}</option>
                   ))}
+                </select>
+              </div>
+
+              <div className="field full">
+                <label>Visa Requirement / Sponsorship</label>
+                <select name="visa_requirement" value={formData.visa_requirement} onChange={handleChange}>
+                  <option value="">No Specific Requirement</option>
+                  <option value="valid_work_visa_required">Valid Work Visa Required</option>
+                  <option value="visa_sponsorship_available">Visa Sponsorship Available</option>
+                  <option value="own_visa_preferred">Own Visa Preferred</option>
+                  <option value="transferable_visa_required">Transferable Visa Required</option>
+                  <option value="gcc_nationals_only">GCC Nationals Only</option>
                 </select>
               </div>
 

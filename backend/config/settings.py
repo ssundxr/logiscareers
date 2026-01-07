@@ -14,20 +14,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ENVIRONMENT = os.environ.get('DJANGO_ENVIRONMENT', 'development')
 IS_PRODUCTION = ENVIRONMENT == 'production'
 
-# Security settings - production requires explicit SECRET_KEY
+# Security settings - use stable default for Cloud Run SQLite
+# In production with external DB, set DJANGO_SECRET_KEY environment variable
+DEFAULT_SECRET_KEY = 'logis-career-ai-2026-secure-key-for-cloud-run-deployment-xyz789'
 if IS_PRODUCTION:
-    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
-    if not SECRET_KEY:
-        raise ValueError('DJANGO_SECRET_KEY environment variable is required in production')
+    SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', DEFAULT_SECRET_KEY)
 else:
     SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'dev-secret-key-change-in-production-logis-career-2026')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'False' if IS_PRODUCTION else 'True').lower() == 'true'
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,.ngrok-free.app,.ngrok.io,.run.app').split(',')
 
 # Production security settings
 if IS_PRODUCTION:
-    SECURE_SSL_REDIRECT = True
+    # Cloud Run handles SSL termination, so we don't need to redirect
+    # Setting this to True causes redirect loops on Cloud Run
+    SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'False').lower() == 'true'
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_HSTS_SECONDS = 31536000
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
     SECURE_HSTS_PRELOAD = True
@@ -49,6 +52,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
     'django_filters',
     
@@ -69,6 +73,16 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# CSRF settings for ngrok
+CSRF_TRUSTED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'https://*.ngrok-free.app',
+    'https://*.ngrok.io',
+    'https://*.run.app',
+    'https://logis-frontend-ts3nmr2mxq-uc.a.run.app',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -159,8 +173,27 @@ SIMPLE_JWT = {
 }
 
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001').split(',')
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:3001,http://127.0.0.1:3001,https://logis-frontend-ts3nmr2mxq-uc.a.run.app').split(',')
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
 
 # API Rate Limiting
 REST_FRAMEWORK['DEFAULT_THROTTLE_CLASSES'] = [

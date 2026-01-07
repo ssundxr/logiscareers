@@ -1,0 +1,513 @@
+/* ============================================
+   CV ANALYSIS TAB - PROFESSIONAL REDESIGN
+   ============================================ */
+
+.cv-analysis-professional {
+  padding: 0;
+}
+
+.cv-analysis-layout {
+  display: grid;
+  grid-template-columns: 480px 1fr;
+  gap: 24px;
+  min-height: 800px;
+}
+
+/* ============================================
+   ATS ANALYSIS PANEL (Left Side)
+   ============================================ */
+
+.ats-analysis-panel {
+  background: #f8f9fa;
+  border-radius: 16px;
+  padding: 24px;
+  overflow-y: auto;
+  max-height: calc(100vh - 200px);
+}
+
+.panel-header-pro {
+  margin-bottom: 32px;
+}
+
+.panel-header-pro h3 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 8px 0;
+}
+
+.panel-subtitle-pro {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+/* ATS Score Hero */
+.ats-score-hero {
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0, 188, 212, 0.25);
+}
+
+.score-hero-content {
+  text-align: center;
+}
+
+.score-label {
+  display: block;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.9);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.score-hero-display {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.score-value {
+  font-size: 72px;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+
+.score-max {
+  font-size: 32px;
+  color: rgba(255, 255, 255, 0.8);
+  font-weight: 600;
+}
+
+.score-bar-container {
+  background: rgba(255, 255, 255, 0.2);
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  background: white;
+  transition: width 1s ease;
+  border-radius: 6px;
+}
+
+/* ATS Metrics Grid */
+.ats-metrics-grid {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease;
+}
+
+.metric-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+.metric-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-icon {
+  font-size: 24px;
+}
+
+.metric-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  flex: 1;
+}
+
+.metric-score-display {
+  margin-bottom: 12px;
+}
+
+.metric-score {
+  font-size: 36px;
+  font-weight: 700;
+}
+
+.metric-score.excellent { color: #22c55e; }
+.metric-score.good { color: #84cc16; }
+.metric-score.average { color: #f59e0b; }
+.metric-score.poor { color: #ef4444; }
+
+.metric-bar {
+  height: 8px;
+  background: #f3f4f6;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.metric-bar-fill {
+  height: 100%;
+  transition: width 0.8s ease;
+  border-radius: 4px;
+}
+
+.metric-bar-fill.excellent { background: linear-gradient(90deg, #22c55e, #16a34a); }
+.metric-bar-fill.good { background: linear-gradient(90deg, #84cc16, #65a30d); }
+.metric-bar-fill.average { background: linear-gradient(90deg, #f59e0b, #d97706); }
+.metric-bar-fill.poor { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+/* Skills Analysis Section */
+.skills-analysis-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  border: 1px solid #e5e7eb;
+}
+
+.section-title-pro {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 20px 0;
+}
+
+.skills-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skills-category {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.category-header.matched {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  color: #166534;
+}
+
+.category-header.missing {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+}
+
+.category-icon {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.category-title {
+  flex: 1;
+}
+
+.category-count {
+  background: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.skills-tags-container {
+  padding: 16px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 60px;
+}
+
+.skill-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.skill-badge.matched {
+  background: #dcfce7;
+  color: #166534;
+  border: 1px solid #86efac;
+}
+
+.skill-badge.matched:hover {
+  background: #bbf7d0;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2);
+}
+
+.skill-badge.missing {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.skill-badge.missing:hover {
+  background: #fecaca;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
+}
+
+.empty-skills {
+  color: #9ca3af;
+  font-size: 13px;
+  font-style: italic;
+  margin: 0;
+  padding: 8px 0;
+}
+
+/* Job Match Section */
+.job-match-section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+}
+
+.match-analysis-box {
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 8px;
+  padding: 20px;
+  border-left: 4px solid #0ea5e9;
+}
+
+.match-description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #374151;
+  margin: 0 0 20px 0;
+}
+
+.match-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+/* ============================================
+   CV DOCUMENT PANEL (Right Side)
+   ============================================ */
+
+.cv-document-panel {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.document-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px;
+  border-bottom: 2px solid #e5e7eb;
+  background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+}
+
+.document-title-section h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px 0;
+}
+
+.document-subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.download-cv-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #111827 0%, #374151 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.download-cv-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+}
+
+.download-cv-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.cv-document-viewer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+  background: #fafafa;
+}
+
+.cv-text-content {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 15px;
+  line-height: 1.8;
+  color: #1f2937;
+  max-width: 800px;
+  margin: 0 auto;
+  background: white;
+  padding: 48px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.cv-text-content .cv-line {
+  min-height: 24px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.cv-not-available {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  min-height: 400px;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.not-available-icon {
+  margin-bottom: 24px;
+  opacity: 0.5;
+}
+
+.cv-not-available h4 {
+  font-size: 20px;
+  color: #6b7280;
+  margin: 0 0 12px 0;
+}
+
+.cv-not-available p {
+  font-size: 14px;
+  color: #9ca3af;
+  max-width: 400px;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 1400px) {
+  .cv-analysis-layout {
+    grid-template-columns: 420px 1fr;
+  }
+}
+
+@media (max-width: 1200px) {
+  .cv-analysis-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  
+  .ats-analysis-panel {
+    max-height: none;
+  }
+  
+  .cv-document-viewer {
+    min-height: 600px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cv-analysis-layout {
+    gap: 16px;
+  }
+  
+  .ats-analysis-panel,
+  .cv-document-panel {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .document-header {
+    flex-direction: column;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  
+  .cv-text-content {
+    padding: 24px;
+    font-size: 14px;
+  }
+  
+  .score-value {
+    font-size: 56px;
+  }
+  
+  .score-max {
+    font-size: 24px;
+  }
+  
+  .match-stats {
+    grid-template-columns: 1fr;
+  }
+}

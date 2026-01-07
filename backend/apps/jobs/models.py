@@ -86,6 +86,11 @@ class Job(models.Model):
         ],
         default='no_preference'
     )
+    visa_requirement = models.CharField(
+        max_length=200,
+        blank=True,
+        help_text='Visa sponsorship or visa requirement details'
+    )
     
     # Salary Range
     salary_min = models.PositiveIntegerField(null=True, blank=True)
@@ -188,7 +193,7 @@ class Job(models.Model):
             'required_education': self.required_education,
             'preferred_nationality': [self.nationality] if self.nationality else [],
             'gender_preference': gender_map.get(self.gender_preference, 'No Preference'),
-            'visa_requirement': None,
+            'visa_requirement': self.visa_requirement,
             
             # Text Fields (ML Input)
             'job_description': self.description,

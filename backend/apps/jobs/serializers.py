@@ -57,7 +57,7 @@ class JobCreateSerializer(serializers.ModelSerializer):
             'state', 'city', 'job_country', 'vacancies', 'designation', 'job_type',
             'min_experience_years', 'max_experience_years', 'min_gcc_experience_years',
             'required_education', 'preferred_education', 'nationality', 'gender_preference',
-            'required_skills', 'preferred_skills', 'preferred_locations', 'keywords',
+            'visa_requirement', 'required_skills', 'preferred_skills', 'preferred_locations', 'keywords',
             'salary_min', 'salary_max', 'salary_currency', 'hide_salary', 'benefits',
             'job_level', 'is_remote', 'industry', 'sub_industry',
             'functional_area', 'expires_at'

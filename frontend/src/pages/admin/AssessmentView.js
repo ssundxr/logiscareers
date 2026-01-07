@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { assessmentService } from '../../services/api';
 import './AssessmentView.css';
+import './CVAnalysisProfessional.css';
 
 /**
  * Enhanced AI Assessment View Component
@@ -362,28 +363,9 @@ const AssessmentView = () => {
         {/* Tabs */}
         <div className="assessment-tabs">
           <button 
-            className={`tab ${activeTab === 'assessment' ? 'active' : ''}`}
-            onClick={() => setActiveTab('assessment')}
+            className={`tab active`}
           >
             AI Assessment
-          </button>
-          <button 
-            className={`tab ${activeTab === 'insights' ? 'active' : ''}`}
-            onClick={() => setActiveTab('insights')}
-          >
-            Candidate Insights
-          </button>
-          <button 
-            className={`tab ${activeTab === 'cv_analysis' ? 'active' : ''}`}
-            onClick={() => setActiveTab('cv_analysis')}
-          >
-            CV Analysis
-          </button>
-          <button 
-            className={`tab ${activeTab === 'comparison' ? 'active' : ''}`}
-            onClick={() => setActiveTab('comparison')}
-          >
-            CV vs JD
           </button>
         </div>
       </div>
@@ -391,7 +373,7 @@ const AssessmentView = () => {
       {/* Assessment Content */}
       {activeTab === 'assessment' && (
         <div className="assessment-content">
-          {/* Data Quality Alert */}
+          {/* Data Quality Alert - Full Width */}
           {data?.assessment?.data_quality && (
             <div className={`data-quality-alert ${
               data.assessment.data_quality.assessment_quality === 'EXCELLENT' ? 'quality-excellent' :
@@ -401,11 +383,16 @@ const AssessmentView = () => {
               'quality-unacceptable'
             }`}>
               <div className="quality-header">
-                <span className="quality-icon">
-                  {data.assessment.data_quality.assessment_quality === 'EXCELLENT' ? '✅' :
-                   data.assessment.data_quality.assessment_quality === 'GOOD' ? '👍' :
-                   data.assessment.data_quality.assessment_quality === 'FAIR' ? '⚠️' :
-                   data.assessment.data_quality.assessment_quality === 'POOR' ? '⚠️' : '🚫'}
+                <span className={`quality-icon-text ${
+                  data.assessment.data_quality.assessment_quality === 'EXCELLENT' ? 'quality-excellent-icon' :
+                  data.assessment.data_quality.assessment_quality === 'GOOD' ? 'quality-good-icon' :
+                  data.assessment.data_quality.assessment_quality === 'FAIR' ? 'quality-fair-icon' :
+                  data.assessment.data_quality.assessment_quality === 'POOR' ? 'quality-poor-icon' : 'quality-unacceptable-icon'
+                }`}>
+                  {data.assessment.data_quality.assessment_quality === 'EXCELLENT' ? 'VERIFIED' :
+                   data.assessment.data_quality.assessment_quality === 'GOOD' ? 'GOOD' :
+                   data.assessment.data_quality.assessment_quality === 'FAIR' ? 'FAIR' :
+                   data.assessment.data_quality.assessment_quality === 'POOR' ? 'WARNING' : 'CRITICAL'}
                 </span>
                 <div className="quality-info">
                   <strong>Assessment Quality: {data.assessment.data_quality.assessment_quality}</strong>
@@ -418,7 +405,7 @@ const AssessmentView = () => {
                data.assessment.data_quality.missing_important_fields.length > 0 && (
                 <details className="missing-fields-details">
                   <summary>
-                    ⭐ {data.assessment.data_quality.missing_important_fields.length} Important Fields Missing 
+                    Important: {data.assessment.data_quality.missing_important_fields.length} Important Fields Missing 
                     (Click to see)
                   </summary>
                   <ul className="missing-fields-list">
@@ -436,7 +423,7 @@ const AssessmentView = () => {
               {data.assessment.data_quality.missing_critical_fields &&
                data.assessment.data_quality.missing_critical_fields.length > 0 && (
                 <div className="critical-missing-alert">
-                  <strong>⭐⭐ {data.assessment.data_quality.missing_critical_fields.length} Critical Fields Missing:</strong>
+                  <strong>CRITICAL: {data.assessment.data_quality.missing_critical_fields.length} Critical Fields Missing:</strong>
                   <ul className="critical-fields-list">
                     {data.assessment.data_quality.missing_critical_fields.map((field, idx) => (
                       <li key={idx}>{field}</li>
@@ -489,7 +476,7 @@ const AssessmentView = () => {
 
             {/* Overall Explanation */}
             <div className="explanation-card">
-              <h4>🤖 AI Analysis Summary</h4>
+              <h4 className="ai-analysis-header">AI Analysis Summary</h4>
               <p>{assessment.overall_explanation || 'Assessment completed. Review field-by-field analysis for details.'}</p>
             </div>
 
@@ -538,6 +525,123 @@ const AssessmentView = () => {
                 <p className="confidence-score">
                   Data completeness: {Math.round((assessment.confidence.score || 0) * 100)}%
                 </p>
+              </div>
+            )}
+
+            {/* HR Recommendation - Detailed */}
+            {data?.assessment?.insights?.recommendation && (
+              <div className="hr-recommendation-card">
+                <div className="recommendation-card-header">
+                  <h4>HR Recommendation</h4>
+                  <span className="recommendation-subtitle">Detailed Analysis</span>
+                </div>
+                
+                <div className={`decision-badge-compact ${
+                  data.assessment.insights.recommendation.includes('HIGHLY RECOMMENDED') ? 'highly-recommended' :
+                  data.assessment.insights.recommendation.includes('RECOMMENDED') && !data.assessment.insights.recommendation.includes('NOT') ? 'recommended' :
+                  data.assessment.insights.recommendation.includes('CONSIDER') ? 'consider' :
+                  data.assessment.insights.recommendation.includes('NOT RECOMMENDED') || data.assessment.insights.recommendation.includes('DO NOT') ? 'not-recommended' : 'borderline'
+                }`}>
+                  {data.assessment.insights.recommendation}
+                </div>
+
+                {/* Red Flags */}
+                {data.assessment.insights.red_flags && data.assessment.insights.red_flags.length > 0 && (
+                  <div className="rec-section">
+                    <h5>Concerns ({data.assessment.insights.red_flags.length})</h5>
+                    {data.assessment.insights.red_flags.slice(0, 2).map((flag, i) => (
+                      <div key={i} className={`rec-item concern severity-${flag.severity.toLowerCase()}`}>
+                        <span className="rec-badge">{flag.severity}</span>
+                        <p>{flag.description}</p>
+                      </div>
+                    ))}
+                    {data.assessment.insights.red_flags.length > 2 && (
+                      <p className="rec-more">+ {data.assessment.insights.red_flags.length - 2} more</p>
+                    )}
+                  </div>
+                )}
+
+                {/* Key Strengths */}
+                {data.assessment.insights.strengths && data.assessment.insights.strengths.length > 0 && (
+                  <div className="rec-section">
+                    <h5>Strengths</h5>
+                    {data.assessment.insights.strengths.slice(0, 3).map((strength, i) => (
+                      <div key={i} className="rec-item strength">• {strength}</div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Weaknesses */}
+                {data.assessment.insights.weaknesses && data.assessment.insights.weaknesses.length > 0 && (
+                  <div className="rec-section">
+                    <h5>Development Areas</h5>
+                    {data.assessment.insights.weaknesses.slice(0, 3).map((weakness, i) => (
+                      <div key={i} className="rec-item weakness">• {weakness}</div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Additional Metrics - Only show if we have meaningful data */}
+                {(data.assessment.insights.career_progression && 
+                  data.assessment.insights.career_progression !== 'UNCLEAR' && 
+                  data.assessment.insights.skill_currency_score > 0 &&
+                  data.assessment.insights.learning_potential > 0 &&
+                  data.assessment.insights.cultural_fit_score > 0) && (
+                  <div className="rec-section">
+                    <h5>Additional Metrics</h5>
+                    <div className="rec-metrics">
+                      <div className="rec-metric-row">
+                        <span>Career Progression:</span>
+                        <span className={`metric-val ${data.assessment.insights.career_progression}`}>
+                          {data.assessment.insights.career_progression === 'STRONG_UPWARD' ? 'Strong Growth ↑' :
+                           data.assessment.insights.career_progression === 'STEADY_UPWARD' ? 'Steady Growth ↑' :
+                           data.assessment.insights.career_progression === 'LATERAL' ? 'Lateral Move →' :
+                           data.assessment.insights.career_progression === 'STAGNANT' ? 'Stagnant −' :
+                           data.assessment.insights.career_progression === 'DECLINING' ? 'Declining ↓' :
+                           data.assessment.insights.career_progression?.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                      <div className="rec-metric-row">
+                        <span>Skill Currency:</span>
+                        <span className={`metric-val ${getScoreClass(data.assessment.insights.skill_currency_score)}`}>
+                          {data.assessment.insights.skill_currency_score >= 80 ? 'Modern' :
+                           data.assessment.insights.skill_currency_score >= 60 ? 'Current' :
+                           data.assessment.insights.skill_currency_score >= 40 ? 'Needs Update' : 'Outdated'}
+                        </span>
+                      </div>
+                      <div className="rec-metric-row">
+                        <span>Learning Potential:</span>
+                        <span className={`metric-val ${getScoreClass(data.assessment.insights.learning_potential)}`}>
+                          {data.assessment.insights.learning_potential >= 80 ? 'Excellent' :
+                           data.assessment.insights.learning_potential >= 60 ? 'Good' :
+                           data.assessment.insights.learning_potential >= 40 ? 'Average' : 'Limited'}
+                        </span>
+                      </div>
+                      <div className="rec-metric-row">
+                        <span>Cultural Fit:</span>
+                        <span className={`metric-val ${getScoreClass(data.assessment.insights.cultural_fit_score)}`}>
+                          {data.assessment.insights.cultural_fit_score >= 80 ? 'Strong Match' :
+                           data.assessment.insights.cultural_fit_score >= 60 ? 'Good Match' :
+                           data.assessment.insights.cultural_fit_score >= 40 ? 'Fair Match' : 'Poor Match'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action */}
+                <div className="rec-action">
+                  <h5>Next Step</h5>
+                  <p>
+                    {data.assessment.insights.recommendation.includes('HIGHLY RECOMMENDED') ? 
+                      'Schedule interview immediately. Excellent match across all areas.' :
+                    data.assessment.insights.recommendation.includes('RECOMMENDED') && !data.assessment.insights.recommendation.includes('NOT') ?
+                      'Proceed with interview. Address identified weaknesses during discussion.' :
+                    data.assessment.insights.recommendation.includes('CONSIDER') ?
+                      'Reserve list. Interview only if top candidates unavailable.' :
+                    'Do not proceed. Does not meet minimum requirements.'}
+                  </p>
+                </div>
               </div>
             )}
           </div>
@@ -599,481 +703,6 @@ const AssessmentView = () => {
                 )}
               </div>
             ))}
-          </div>
-        </div>
-      )}
-
-      {/* CV Analysis Tab */}
-      {activeTab === 'cv_analysis' && (
-        <div className="cv-analysis-content">
-          {/* Summary Metrics */}
-          {cvAssessment && (
-            <div className="cv-scores-grid">
-              <div className="cv-score-card">
-                <h4>Overall CV Score</h4>
-                <div className={`cv-score-circle ${getScoreClass(cvAssessment.cv_score)}`}>
-                  {cvAssessment.cv_score}%
-                </div>
-              </div>
-              <div className="cv-score-card">
-                <h4>CV Quality</h4>
-                <div className={`cv-score-circle ${getScoreClass(cvAssessment.cv_quality_score)}`}>
-                  {cvAssessment.cv_quality_score}%
-                </div>
-              </div>
-              <div className="cv-score-card">
-                <h4>Content Relevance</h4>
-                <div className={`cv-score-circle ${getScoreClass(cvAssessment.content_relevance_score)}`}>
-                  {cvAssessment.content_relevance_score}%
-                </div>
-              </div>
-              <div className="cv-score-card">
-                <h4>Keyword Match</h4>
-                <div className={`cv-score-circle ${getScoreClass(cvAssessment.keyword_match_score)}`}>
-                  {cvAssessment.keyword_match_score}%
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Side-by-Side CV Comparison */}
-          <div className="cv-comparison-container">
-            <h3 className="comparison-title">ATS Keyword Analysis</h3>
-            
-            <div className="cv-dual-view">
-              {/* Original CV */}
-              <div className="cv-panel">
-                <div className="cv-panel-header">
-                  <h4>Original CV</h4>
-                  <span className="panel-subtitle">Uploaded Document</span>
-                </div>
-                <div className="cv-panel-body scrollable">
-                  {cv_data?.cv_text ? (
-                    <div className="cv-text-display">
-                      {formatCVText(cv_data.cv_text)}
-                    </div>
-                  ) : (
-                    <div className="cv-empty-state">
-                      <p>No CV text available</p>
-                      <span>CV file may not have been parsed</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* AI Highlighted CV */}
-              <div className="cv-panel highlighted">
-                <div className="cv-panel-header">
-                  <h4>AI-Highlighted CV</h4>
-                  <span className="panel-subtitle">ATS Keyword Matches</span>
-                  <div className="highlight-legend">
-                    <span className="legend-item">
-                      <span className="legend-color high-match"></span>
-                      High Match (90-100%)
-                    </span>
-                    <span className="legend-item">
-                      <span className="legend-color medium-match"></span>
-                      Medium Match (70-89%)
-                    </span>
-                    <span className="legend-item">
-                      <span className="legend-color low-match"></span>
-                      Low Match (50-69%)
-                    </span>
-                  </div>
-                </div>
-                <div className="cv-panel-body scrollable">
-                  {cv_data?.cv_text ? (
-                    <div className="cv-text-display highlighted">
-                      {highlightATSKeywords(
-                        cv_data.cv_text, 
-                        cvAssessment?.matched_keywords || [],
-                        jd_data?.skills?.required_skills || [],
-                        jd_data?.skills?.preferred_skills || []
-                      )}
-                    </div>
-                  ) : (
-                    <div className="cv-empty-state">
-                      <p>No CV text available</p>
-                      <span>CV file may not have been parsed</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Keywords Analysis */}
-          {cvAssessment && (
-            <div className="cv-details-grid">
-              <div className="cv-keywords-card">
-                <h4>Matched Keywords</h4>
-                <div className="keywords-list matched">
-                  {cvAssessment.matched_keywords?.map((keyword, i) => (
-                    <span key={i} className="keyword-tag matched">{keyword}</span>
-                  ))}
-                  {(!cvAssessment.matched_keywords || cvAssessment.matched_keywords.length === 0) && (
-                    <p className="no-keywords">No keywords matched</p>
-                  )}
-                </div>
-              </div>
-              <div className="cv-keywords-card">
-                <h4>Missing Keywords</h4>
-                <div className="keywords-list missing">
-                  {cvAssessment.missing_keywords?.map((keyword, i) => (
-                    <span key={i} className="keyword-tag missing">{keyword}</span>
-                  ))}
-                  {(!cvAssessment.missing_keywords || cvAssessment.missing_keywords.length === 0) && (
-                    <p className="no-keywords">No critical keywords missing</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* NLP Explanation */}
-          {cvAssessment && (
-            <div className="nlp-explanation-section">
-              <h3>Natural Language Processing Analysis</h3>
-              
-              <div className="nlp-cards-grid">
-                <div className="nlp-card">
-                  <h4>Keyword Matching Algorithm</h4>
-                  <p>
-                    Our AI system employs advanced semantic similarity analysis to match keywords from the job description 
-                    with the candidate's CV. The matching process uses:
-                  </p>
-                  <ul>
-                    <li><strong>Exact Matching:</strong> Direct word-for-word matches receive the highest confidence score (90-100%)</li>
-                    <li><strong>Semantic Similarity:</strong> Contextually similar terms are matched using NLP embeddings (70-89%)</li>
-                    <li><strong>Partial Matching:</strong> Related but not identical terms receive lower scores (50-69%)</li>
-                  </ul>
-                </div>
-
-                <div className="nlp-card">
-                  <h4>Highlighting Methodology</h4>
-                  <p>The color-coded highlighting system indicates match probability:</p>
-                  <ul>
-                    <li><strong className="highlight-dark-green">Dark Green (90-100%):</strong> Exact or highly confident matches with required skills</li>
-                    <li><strong className="highlight-light-green">Light Green (70-89%):</strong> Good semantic matches with moderate confidence</li>
-                    <li><strong className="highlight-orange">Orange (50-69%):</strong> Partial or lower confidence matches</li>
-                    <li><strong>Unhighlighted:</strong> Text not matching job requirements</li>
-                  </ul>
-                </div>
-
-                <div className="nlp-card">
-                  <h4>Analysis Summary</h4>
-                  <p>{cvAssessment.explanation}</p>
-                  
-                  {cvAssessment.cv_insights && (
-                    <div className="insights-summary">
-                      <h5>Document Quality Metrics:</h5>
-                      <div className="metrics-list">
-                        <span>Word Count: {cvAssessment.cv_insights.word_count || 'N/A'}</span>
-                        <span>Contact Info: {cvAssessment.cv_insights.has_email && cvAssessment.cv_insights.has_phone ? 'Complete' : 'Incomplete'}</span>
-                        <span>Structure: {cvAssessment.cv_insights.has_structured_sections ? 'Well-organized' : 'Needs improvement'}</span>
-                        <span>Achievements: {cvAssessment.cv_insights.has_achievements ? 'Present' : 'Missing'}</span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                <div className="nlp-card">
-                  <h4>Recommendation Engine</h4>
-                  <p>
-                    Based on the keyword analysis and semantic matching, the system calculates an overall relevance score. 
-                    This score considers:
-                  </p>
-                  <ul>
-                    <li>Coverage of required skills and qualifications</li>
-                    <li>Presence of preferred qualifications</li>
-                    <li>CV quality and presentation</li>
-                    <li>Contextual relevance to job requirements</li>
-                  </ul>
-                  <p className="recommendation-note">
-                    Match Rate: {cvAssessment.matched_keywords?.length || 0} of{' '}
-                    {(jd_data?.skills?.required_skills?.length || 0) + (jd_data?.skills?.preferred_skills?.length || 0)}{' '}
-                    keywords found
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Candidate Insights Tab */}
-      {activeTab === 'insights' && (
-        <div className="insights-content">
-          {!data?.assessment?.insights || 
-           (data.assessment.insights.strengths?.length === 0 && 
-            data.assessment.insights.weaknesses?.length === 0 && 
-            data.assessment.insights.red_flags?.length === 0 &&
-            !data.assessment.insights.career_progression) ? (
-            <div className="no-insights-message">
-              <h3>No Insights Available</h3>
-              <p>This assessment was created before the Candidate Insights feature was added.</p>
-              <p>Please click the <strong>"Re-run Assessment"</strong> button above to generate comprehensive insights including:</p>
-              <ul>
-                <li>Red Flags Detection</li>
-                <li>Career Progression Analysis</li>
-                <li>Skill Currency Score</li>
-                <li>Strengths & Weaknesses</li>
-                <li>Learning Potential & Cultural Fit</li>
-                <li>Key Highlights</li>
-              </ul>
-              <button 
-                onClick={handleRerunAssessment} 
-                className="rerun-button-inline"
-                style={{
-                  marginTop: '20px',
-                  padding: '12px 24px',
-                  backgroundColor: '#00bcd4',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '16px',
-                  fontWeight: '600'
-                }}
-              >
-                Re-run Assessment Now
-              </button>
-            </div>
-          ) : (
-            <>
-          {/* Red Flags Section */}
-          {data.assessment.insights.red_flags && data.assessment.insights.red_flags.length > 0 && (
-            <div className="insights-section red-flags-section">
-              <h3>Red Flags & Concerns</h3>
-              <div className="red-flags-grid">
-                {data.assessment.insights.red_flags.map((flag, index) => {
-                  const severityClass = flag.severity.toLowerCase();
-                  
-                  return (
-                    <div key={index} className={`red-flag-card severity-${severityClass}`}>
-                      <div className="flag-header">
-                        <span className="flag-type">{formatLabel(flag.type)}</span>
-                        <span className={`flag-severity ${severityClass}`}>{flag.severity}</span>
-                      </div>
-                      <p className="flag-description">{flag.description}</p>
-                      <div className="flag-impact">
-                        <strong>Impact:</strong> {flag.impact}
-                      </div>
-                      <div className="flag-recommendation">
-                        <strong>Recommendation:</strong> {flag.recommendation}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Career & Skills Analysis */}
-          <div className="insights-section career-skills-section">
-            <h3>Career & Skills Analysis</h3>
-            <div className="analysis-grid">
-              {/* Career Progression */}
-              <div className="analysis-card">
-                <h4>Career Progression</h4>
-                <div className="progression-indicator">
-                  <span className={`progression-badge ${data.assessment.insights.career_progression}`}>
-                    {formatLabel(data.assessment.insights.career_progression)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Skill Currency */}
-              <div className="analysis-card">
-                <h4>Skill Currency</h4>
-                <div className={`score-display ${getScoreClass(data.assessment.insights.skill_currency_score)}`}>
-                  {data.assessment.insights.skill_currency_score}%
-                </div>
-                <p className="analysis-description">
-                  {data.assessment.insights.skill_currency_score >= 80 ? 
-                    'Skills are modern and up-to-date' :
-                    data.assessment.insights.skill_currency_score >= 60 ?
-                    'Skills are mostly current with some outdated areas' :
-                    'Skills need updating to current technologies'}
-                </p>
-              </div>
-
-              {/* Learning Potential */}
-              <div className="analysis-card">
-                <h4>Learning Potential</h4>
-                <div className={`score-display ${getScoreClass(data.assessment.insights.learning_potential)}`}>
-                  {data.assessment.insights.learning_potential}%
-                </div>
-                <p className="analysis-description">
-                  Ability to learn and adapt to new technologies and processes
-                </p>
-              </div>
-
-              {/* Cultural Fit */}
-              <div className="analysis-card">
-                <h4>Cultural Fit</h4>
-                <div className={`score-display ${getScoreClass(data.assessment.insights.cultural_fit_score)}`}>
-                  {data.assessment.insights.cultural_fit_score}%
-                </div>
-                <p className="analysis-description">
-                  Alignment with company values and work environment
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Strengths & Weaknesses */}
-          <div className="insights-section strengths-weaknesses-section">
-            <div className="two-column-layout">
-              {/* Strengths */}
-              <div className="column strengths-column">
-                <h3>Key Strengths</h3>
-                {data.assessment.insights.strengths && data.assessment.insights.strengths.length > 0 ? (
-                  <ul className="strengths-list">
-                    {data.assessment.insights.strengths.map((strength, index) => (
-                      <li key={index} className="strength-item">
-                        {strength}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="no-data">No specific strengths identified</p>
-                )}
-              </div>
-
-              {/* Weaknesses */}
-              <div className="column weaknesses-column">
-                <h3>Areas of Concern</h3>
-                {data.assessment.insights.weaknesses && data.assessment.insights.weaknesses.length > 0 ? (
-                  <ul className="weaknesses-list">
-                    {data.assessment.insights.weaknesses.map((weakness, index) => (
-                      <li key={index} className="weakness-item">
-                        {weakness}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="no-data">No major weaknesses identified</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Key Highlights */}
-          {data.assessment.insights.key_highlights && data.assessment.insights.key_highlights.length > 0 && (
-            <div className="insights-section highlights-section">
-              <h3>Key Highlights</h3>
-              <div className="highlights-grid">
-                {data.assessment.insights.key_highlights.map((highlight, index) => (
-                  <div key={index} className="highlight-card">
-                    <p>{highlight}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Final Recommendation */}
-          <div className="insights-section recommendation-section">
-            <h3>HR Recommendation</h3>
-            <div className="recommendation-box">
-              <p className="recommendation-text">
-                {data.assessment.insights.recommendation}
-              </p>
-            </div>
-          </div>
-          </>
-          )}
-        </div>
-      )}
-
-      {/* Comparison Tab */}
-      {activeTab === 'comparison' && (
-        <div className="comparison-content">
-          <h3>CV vs Job Requirements Comparison</h3>
-          
-          {/* Experience Comparison */}
-          <div className="comparison-section">
-            <h4>Experience</h4>
-            <div className="comparison-grid">
-              <div className="comparison-column cv">
-                <h5>Candidate</h5>
-                <p><strong>Total:</strong> {cv_data?.experience?.total_experience}</p>
-                <p><strong>GCC:</strong> {cv_data?.experience?.gcc_experience}</p>
-              </div>
-              <div className="comparison-column jd">
-                <h5>Required</h5>
-                <p><strong>Total:</strong> {jd_data?.experience?.total_experience}</p>
-                <p><strong>GCC:</strong> {jd_data?.experience?.gcc_experience}</p>
-                <p><strong>Industry:</strong> {jd_data?.experience?.industry}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Skills Comparison */}
-          <div className="comparison-section">
-            <h4>Skills</h4>
-            <div className="comparison-grid">
-              <div className="comparison-column cv">
-                <h5>Candidate Skills</h5>
-                <div className="skill-tags">
-                  {cv_data?.skills?.all_skills?.slice(0, 15).map((skill, i) => (
-                    <span key={i} className="skill-tag cv">{skill}</span>
-                  ))}
-                </div>
-              </div>
-              <div className="comparison-column jd">
-                <h5>Required Skills</h5>
-                <div className="skill-tags">
-                  {jd_data?.skills?.required_skills?.map((skill, i) => (
-                    <span key={i} className="skill-tag jd required">{skill}</span>
-                  ))}
-                </div>
-                <h6 style={{marginTop: '10px'}}>Preferred</h6>
-                <div className="skill-tags">
-                  {jd_data?.skills?.preferred_skills?.map((skill, i) => (
-                    <span key={i} className="skill-tag jd preferred">{skill}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Education Comparison */}
-          <div className="comparison-section">
-            <h4>Education</h4>
-            <div className="comparison-grid">
-              <div className="comparison-column cv">
-                <h5>Candidate</h5>
-                {cv_data?.education?.map((edu, i) => (
-                  <div key={i} className="edu-entry">
-                    <p><strong>{edu.degree || edu.level}</strong></p>
-                    <p>{edu.institution}</p>
-                  </div>
-                ))}
-              </div>
-              <div className="comparison-column jd">
-                <h5>Required</h5>
-                <p><strong>Required:</strong> {jd_data?.education?.required || 'Any'}</p>
-                <p><strong>Preferred:</strong> {jd_data?.education?.preferred || '-'}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Salary Comparison */}
-          <div className="comparison-section">
-            <h4>Salary</h4>
-            <div className="comparison-grid">
-              <div className="comparison-column cv">
-                <h5>Candidate</h5>
-                <p><strong>Current:</strong> AED {cv_data?.personal_details?.current_salary?.toLocaleString() || '-'}</p>
-                <p><strong>Expected:</strong> AED {cv_data?.personal_details?.expected_salary?.toLocaleString() || '-'}</p>
-              </div>
-              <div className="comparison-column jd">
-                <h5>Budget</h5>
-                <p><strong>Range:</strong> {jd_data?.personal_details?.salary || 'Not specified'}</p>
-              </div>
-            </div>
           </div>
         </div>
       )}
