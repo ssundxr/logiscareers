@@ -515,7 +515,7 @@ const AssessmentView = () => {
               </div>
             )}
 
-            {/* Confidence */}
+            {/* Confidence with Interval */}
             {assessment.confidence && (
               <div className="confidence-card">
                 <h4>Assessment Confidence</h4>
@@ -525,6 +525,173 @@ const AssessmentView = () => {
                 <p className="confidence-score">
                   Data completeness: {Math.round((assessment.confidence.score || 0) * 100)}%
                 </p>
+              </div>
+            )}
+
+            {/* Smart Recommendation - NEW */}
+            {assessment.smart_recommendation && (
+              <div className="smart-recommendation-card">
+                <h4>AI Smart Recommendation</h4>
+                
+                {/* Confidence Interval */}
+                {assessment.smart_recommendation.confidence_interval && (
+                  <div className="confidence-interval">
+                    <div className="interval-header">
+                      <span className="interval-label">Score with Statistical Confidence:</span>
+                    </div>
+                    <div className="interval-display">
+                      <span className="point-estimate">
+                        {Math.round(assessment.smart_recommendation.confidence_interval.point_estimate)}%
+                      </span>
+                      <span className="margin">±{Math.round(assessment.smart_recommendation.confidence_interval.margin_of_error)}</span>
+                      <span className="confidence-level">
+                        ({Math.round(assessment.smart_recommendation.confidence_interval.confidence_level * 100)}% confidence)
+                      </span>
+                    </div>
+                    <div className="interval-range">
+                      Range: {Math.round(assessment.smart_recommendation.confidence_interval.lower_bound)}% - {Math.round(assessment.smart_recommendation.confidence_interval.upper_bound)}%
+                    </div>
+                  </div>
+                )}
+
+                {/* Hiring Action */}
+                <div className={`hiring-action-badge action-${assessment.smart_recommendation.action?.toLowerCase().replace(/_/g, '-')}`}>
+                  <span className="action-label">Action:</span>
+                  <span className="action-value">
+                    {assessment.smart_recommendation.action?.replace(/_/g, ' ')}
+                  </span>
+                </div>
+
+                {/* Priority & Risk */}
+                <div className="recommendation-metrics">
+                  <div className="metric-item">
+                    <span className="metric-label">Priority:</span>
+                    <span className={`priority-badge priority-${assessment.smart_recommendation.priority?.toLowerCase()}`}>
+                      {assessment.smart_recommendation.priority}
+                    </span>
+                  </div>
+                  <div className="metric-item">
+                    <span className="metric-label">Risk Level:</span>
+                    <span className={`risk-badge risk-${assessment.smart_recommendation.risk_level?.toLowerCase()}`}>
+                      {assessment.smart_recommendation.risk_level}
+                    </span>
+                  </div>
+                  {assessment.smart_recommendation.estimated_success_probability && (
+                    <div className="metric-item">
+                      <span className="metric-label">Success Probability:</span>
+                      <span className="success-probability">
+                        {Math.round(assessment.smart_recommendation.estimated_success_probability)}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Next Steps */}
+                {assessment.smart_recommendation.next_steps && assessment.smart_recommendation.next_steps.length > 0 && (
+                  <div className="next-steps">
+                    <h5>Next Steps:</h5>
+                    <ol className="next-steps-list">
+                      {assessment.smart_recommendation.next_steps.map((step, i) => (
+                        <li key={i}>{step}</li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+
+                {/* Interview Focus */}
+                {assessment.smart_recommendation.interview_questions_focus && 
+                 assessment.smart_recommendation.interview_questions_focus.length > 0 && (
+                  <div className="interview-focus">
+                    <h5>Interview Focus Areas:</h5>
+                    <ul className="focus-list">
+                      {assessment.smart_recommendation.interview_questions_focus.map((area, i) => (
+                        <li key={i}>{area}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Growth Potential - NEW */}
+            {assessment.growth_potential && (
+              <div className="growth-potential-card">
+                <h4>Growth Potential Analysis</h4>
+                
+                <div className="growth-score-display">
+                  <div className={`growth-score-circle ${assessment.growth_potential.tier?.toLowerCase()}`}>
+                    <span className="growth-score">
+                      {Math.round(assessment.growth_potential.growth_potential_score || 0)}%
+                    </span>
+                    <span className="growth-label">Growth Score</span>
+                  </div>
+                  <div className={`growth-tier-badge tier-${assessment.growth_potential.tier?.toLowerCase().replace(/_/g, '-')}`}>
+                    {assessment.growth_potential.tier?.replace(/_/g, ' ')}
+                  </div>
+                </div>
+
+                {/* Growth Metrics Breakdown */}
+                <div className="growth-metrics">
+                  <div className="growth-metric-row">
+                    <span className="metric-name">Learning Agility:</span>
+                    <div className="metric-bar-container">
+                      <div 
+                        className={`metric-bar-fill ${getScoreClass(assessment.growth_potential.learning_agility || 0)}`}
+                        style={{ width: `${assessment.growth_potential.learning_agility || 0}%` }}
+                      ></div>
+                    </div>
+                    <span className="metric-value">{Math.round(assessment.growth_potential.learning_agility || 0)}%</span>
+                  </div>
+                  <div className="growth-metric-row">
+                    <span className="metric-name">Career Trajectory:</span>
+                    <div className="metric-bar-container">
+                      <div 
+                        className={`metric-bar-fill ${getScoreClass(assessment.growth_potential.career_trajectory_score || 0)}`}
+                        style={{ width: `${assessment.growth_potential.career_trajectory_score || 0}%` }}
+                      ></div>
+                    </div>
+                    <span className="metric-value">{Math.round(assessment.growth_potential.career_trajectory_score || 0)}%</span>
+                  </div>
+                  <div className="growth-metric-row">
+                    <span className="metric-name">Skill Acquisition:</span>
+                    <div className="metric-bar-container">
+                      <div 
+                        className={`metric-bar-fill ${getScoreClass(assessment.growth_potential.skill_acquisition_rate || 0)}`}
+                        style={{ width: `${assessment.growth_potential.skill_acquisition_rate || 0}%` }}
+                      ></div>
+                    </div>
+                    <span className="metric-value">{Math.round(assessment.growth_potential.skill_acquisition_rate || 0)}%</span>
+                  </div>
+                  <div className="growth-metric-row">
+                    <span className="metric-name">Adaptability:</span>
+                    <div className="metric-bar-container">
+                      <div 
+                        className={`metric-bar-fill ${getScoreClass(assessment.growth_potential.adaptability_score || 0)}`}
+                        style={{ width: `${assessment.growth_potential.adaptability_score || 0}%` }}
+                      ></div>
+                    </div>
+                    <span className="metric-value">{Math.round(assessment.growth_potential.adaptability_score || 0)}%</span>
+                  </div>
+                </div>
+
+                {/* Key Indicators */}
+                {assessment.growth_potential.indicators && assessment.growth_potential.indicators.length > 0 && (
+                  <div className="growth-indicators">
+                    <h5>Key Indicators:</h5>
+                    <ul className="indicators-list">
+                      {assessment.growth_potential.indicators.map((indicator, i) => (
+                        <li key={i}>✓ {indicator}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Growth Recommendation */}
+                {assessment.growth_potential.recommendation && (
+                  <div className="growth-recommendation">
+                    <p>{assessment.growth_potential.recommendation}</p>
+                  </div>
+                )}
               </div>
             )}
 
